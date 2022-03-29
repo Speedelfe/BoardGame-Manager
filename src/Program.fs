@@ -12,21 +12,6 @@ open Avalonia.Controls.ApplicationLifetimes
 open Avalonia.Diagnostics
 open Avalonia.Layout
 
-[<AutoOpen>]
-module Blaa =
-    let init () = ()
-
-    let update msg state = state
-
-    let view state dispatch : IView =
-        DockPanel.create [
-            DockPanel.children [
-                TextBlock.create [
-                    TextBlock.text "Hello Boardgame!"
-                ]
-            ]
-        ]
-
 type MainWindow() as this =
     inherit HostWindow()
 
@@ -42,7 +27,7 @@ type MainWindow() as this =
         this.AttachDevTools()
 #endif
 
-        Program.mkSimple init update view
+        Program.mkSimple MainView.init MainView.update MainView.view
         |> Program.withHost this
 #if DEBUG
         |> Program.withConsoleTrace
