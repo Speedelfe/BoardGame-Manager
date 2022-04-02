@@ -17,6 +17,7 @@
 	"extensions": [
 		"ms-dotnettools.csharp",
 		"editorconfig.editorconfig",
+		"github.copilot",
 		"Ionide.Ionide-fsharp"
 	],
 	// Use 'forwardPorts' to make a list of ports inside the container available locally.
