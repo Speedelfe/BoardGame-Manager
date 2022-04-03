@@ -17,8 +17,9 @@ open BoardGameManager.Types
 module MainView =
     let init () : State =
         { gameList =
-            [ { name = "Dixit" }
-              { name = "Flügelschlag" } ]
+            [ { name = "Dixit"; playerNumbers = 2 }
+              { name = "Flügelschlag"
+                playerNumbers = 5 } ]
           choosenGame = None }
 
     let update msg state =
@@ -59,14 +60,31 @@ module MainView =
                             |> dispatch)
 
                     ]
-                StackPanel.create [
-                    StackPanel.dock Dock.Right
-                    StackPanel.orientation Orientation.Vertical
-                    StackPanel.children [
-                        TextBlock.create [
-                            TextBlock.text "Game Details"
+                // Detail Infos eines Spieles -> choosenGame Some enthält ausgewähles Spiel, sonst none
+                DockPanel.create [
+                    DockPanel.dock Dock.Right
+                    DockPanel.children [
+                        StackPanel.create [
+                            StackPanel.dock Dock.Bottom
+                            StackPanel.orientation Orientation.Horizontal
+                            StackPanel.children [
+                                Button.create [ Button.content "Edit" ]
+                            ]
                         ]
-                    ]
+                        StackPanel.create [
+                            StackPanel.dock Dock.Top
+                            StackPanel.orientation Orientation.Vertical
+                            StackPanel.children [
+                                match state.choosenGame with
+                                | None -> ()
+                                | Some game ->
+                                    TextBlock.create [
+                                        TextBlock.text $"Spieleranzahl {game.playerNumbers}"
+                                    ]
+                            ]
+                        ]
+
+                        ]
                 ]
             ]
         ]

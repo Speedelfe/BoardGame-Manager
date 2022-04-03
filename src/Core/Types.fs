@@ -30,7 +30,7 @@ module Types =
 
     type Game =
         { name: string
-        //   playerNumbers: int
+          playerNumbers: int
         //   playTime: float
         //   lastPlayed: DateTime option
         //   genre: GameGenre
