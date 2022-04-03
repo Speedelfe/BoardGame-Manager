@@ -12,17 +12,33 @@ open Avalonia.Controls.ApplicationLifetimes
 open Avalonia.Diagnostics
 open Avalonia.Layout
 
+open BoardGameManager.Types
 
 module MainView =
-    let init () = ()
+    let init () : State =
+        { gameList =
+            [ { name = "Dixit"
+                playerNumbers = 2
+                playTime = 60
+                lastPlayed = None
+                genre = GameGenre.Strategy
+                secondaryGenre = None
+                shelf = ""
+                description = None } ] }
 
     let update msg state = state
+
+    let gameItemView (game: Game) =
+        TextBlock.create [
+            TextBlock.text game.name
+        ]
 
     let view state dispatch : IView =
         DockPanel.create [
             DockPanel.children [
-                TextBlock.create [
-                    TextBlock.text "Hello Boardgame!"
+                ListBox.create [
+                    ListBox.dataItems state.gameList
+                    ListBox.itemTemplate (DataTemplateView<Game>.create gameItemView)
                 ]
             ]
         ]

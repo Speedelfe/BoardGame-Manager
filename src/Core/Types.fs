@@ -1,53 +1,43 @@
 namespace BoardGameManager
 
 module Types =
+    open System
 
     type GameGenre =
-        | "strategy"
-        | "card"
-        | "raetsel"
-        | "wuerfel"
-        | "enginebuilder"
-        | "party"
-        | "other"
+        | Strategy
+        | Card
+        | Raetsel
+        | Wuerfel
+        | Enginebuilder
+        | Party
+        | Other
 
     type ShelfName =
-        | "Wohnwand-Links"
-        | "Wohnwand-Rechts"
-        | "Sofa-Schrank"
-        | "Büro-Regal"
+        | WohnwandLinks
+        | WohnwandRechts
+        | SofaSchrank
+        | BüroRegal
 
     type GameJson =
-        {
-            name: string
-            playerNumbers: int
-            playTime: float
-            lastPlayed: string
-            genre: string
-            secondaryGenre: string
-            shelf: string
-            description: string
-        }
+        { name: string
+          playerNumbers: int
+          playTime: float
+          lastPlayed: string
+          genre: string
+          secondaryGenre: string
+          shelf: string
+          description: string }
+
     type Game =
-        {
-            name: string;
-            playerNumbers: int
-            playTime: float
-            lastPlayed: Option DateTime
-            genre: GameGenre
-            secondaryGenre: Opion List<GameGenre>
-            shelf: string
-            description: Option string
-        }
+        { name: string
+          playerNumbers: int
+          playTime: float
+          lastPlayed: DateTime option
+          genre: GameGenre
+          secondaryGenre: GameGenre list option
+          shelf: string
+          description: string option }
 
-    type GameList =
-        {
-            games: list<Game>
-        }
+    type Shelf = { name: ShelfName; games: Game list }
 
-    type Shelf =
-        {
-            name: ShelfName;
-            games: List<Game>
-        }
-
+    type State = { gameList: Game list }

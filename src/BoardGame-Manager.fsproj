@@ -8,6 +8,7 @@
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="Core/Types.fs"/>
+    <Compile Include="Core/Functions.fs"/>
     <Compile Include="View/MainView.fs"/>
     <Compile Include="Program.fs" />
   </ItemGroup>
