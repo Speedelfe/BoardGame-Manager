@@ -30,13 +30,14 @@ module Types =
 
     type Game =
         { name: string
-          playerNumbers: int
-          playTime: float
-          lastPlayed: DateTime option
-          genre: GameGenre
-          secondaryGenre: GameGenre list option
-          shelf: string
-          description: string option }
+        //   playerNumbers: int
+        //   playTime: float
+        //   lastPlayed: DateTime option
+        //   genre: GameGenre
+        //   secondaryGenre: GameGenre list option
+        //   shelf: string
+        //   description: string option
+         }
 
     type Shelf = { name: ShelfName; games: Game list }
 
