@@ -18,9 +18,14 @@ module MainView =
     let init () : State =
         { gameList =
             [ { name = "Dixit" }
-              { name = "Flügelschlag" } ] }
+              { name = "Flügelschlag" } ]
+          choosenGame = None }
 
-    let update msg state = state
+    let update msg state =
+        match msg with
+        | ShowDetail game ->
+            let state = { state with choosenGame = Some game }
+            state
 
     let gameItemView (game: Game) =
         TextBlock.create [
@@ -39,7 +44,7 @@ module MainView =
                             TextBlock.text "Menü"
                         ]
                         TextBlock.create [
-                            TextBlock.text "Option"
+                            TextBlock.text "New Game"
                         ]
                     ]
                 ]
@@ -47,7 +52,13 @@ module MainView =
                     ListBox.dock Dock.Left
                     ListBox.dataItems state.gameList
                     ListBox.itemTemplate (DataTemplateView<Game>.create gameItemView)
-                ]
+                    ListBox.onSelectedIndexChanged (fun index ->
+                        if index >= 0 then
+                            state.gameList.Item index
+                            |> ShowDetail
+                            |> dispatch)
+
+                    ]
                 StackPanel.create [
                     StackPanel.dock Dock.Right
                     StackPanel.orientation Orientation.Vertical

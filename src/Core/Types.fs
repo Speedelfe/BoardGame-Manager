@@ -41,4 +41,8 @@ module Types =
 
     type Shelf = { name: ShelfName; games: Game list }
 
-    type State = { gameList: Game list }
+    type State =
+        { gameList: Game list
+          choosenGame: Game option }
+
+    type Msg = ShowDetail of Game
