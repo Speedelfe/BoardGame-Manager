@@ -16,7 +16,7 @@ type MainWindow() as this =
     inherit HostWindow()
 
     do
-        base.Title <- "BoardGame Manager"
+        base.Title <- "Boardgame Manager"
         base.Width <- 800.0
         base.Height <- 400.0
 
