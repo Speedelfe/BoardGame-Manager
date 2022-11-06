@@ -1,8 +1,11 @@
+# Ignore compiled stuff
 bin/
 obj/
 
+# Ignore paket stuff
 packages/
 paket-files/
 
+# Ignore Ionide stuff
 .ionide/
 .fake/
