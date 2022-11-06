@@ -18,31 +18,33 @@ module Types =
         | SofaSchrank
         | BüroRegal
 
-    type GameJson =
-        { name: string
-          playerNumbers: int
-          playTime: float
-          lastPlayed: string
-          genre: string
-          secondaryGenre: string
-          shelf: string
-          description: string }
+    type GameJson = {
+        name: string
+        playerNumbers: int
+        playTime: float
+        lastPlayed: string
+        genre: string
+        secondaryGenre: string
+        shelf: string
+        description: string
+    }
 
-    type Game =
-        { name: string
-          playerNumbers: int
-        //   playTime: float
-        //   lastPlayed: DateTime option
-        //   genre: GameGenre
-        //   secondaryGenre: GameGenre list option
-        //   shelf: string
-        //   description: string option
-         }
+    type Game = {
+        name: string
+        playerNumbers: int
+    //   playTime: float
+    //   lastPlayed: DateTime option
+    //   genre: GameGenre
+    //   secondaryGenre: GameGenre list option
+    //   shelf: string
+    //   description: string option
+    }
 
     type Shelf = { name: ShelfName; games: Game list }
 
-    type State =
-        { gameList: Game list
-          choosenGame: Game option }
+    type State = {
+        gameList: Game list
+        choosenGame: Game option
+    }
 
     type Msg = ShowDetail of Game
