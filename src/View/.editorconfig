@@ -1,0 +1,2 @@
+[*.fs]
+fsharp_experimental_stroustrup_style = true
