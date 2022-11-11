@@ -6,5 +6,6 @@ nuget FSharp.Core
 
 nuget Avalonia.Diagnostics
 nuget Elmish
+nuget FSharp.Json
 nuget JaggerJo.Avalonia.FuncUI.DSL
 nuget JaggerJo.Avalonia.FuncUI.Elmish
