@@ -42,6 +42,12 @@ module Types =
         //   description: string option
         }
 
+    type newGame =
+        {
+            name: string option
+            playerNumber: int option
+        }
+
     type GameSaveStrukture = { gameList: Game list }
 
     type Shelf = { name: ShelfName; games: Game list }
@@ -50,9 +56,11 @@ module Types =
         {
             gameList: Game list
             choosenGame: Game option
-            newGame: bool
+            newGameView: bool
+            newGame: newGame option
         }
 
     type Msg =
         | ShowDetail of Game
         | ShowNewGame
+        | SaveNewGame of Game

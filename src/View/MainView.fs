@@ -13,6 +13,7 @@ open Avalonia.Diagnostics
 open Avalonia.Layout
 
 open BoardGameManager.Types
+open BoardGameManager.Functions
 
 module MainView =
     let init () : State = {
@@ -25,7 +26,8 @@ module MainView =
                 }
             ]
         choosenGame = None
-        newGame = false
+        newGameView = false
+        newGame = None
     }
 
     let update msg state =
@@ -34,7 +36,7 @@ module MainView =
             let state =
                 { state with
                     choosenGame = Some game
-                    newGame = false
+                    newGameView = false
                 }
 
             state
@@ -42,9 +44,14 @@ module MainView =
             let state =
                 { state with
                     choosenGame = None
-                    newGame = true
+                    newGameView = true
                 }
 
+            state
+        | SaveNewGame newGame ->
+            let newGameList = List.append state.gameList [ newGame ]
+            saveFile newGameList
+            let state = { state with gameList = newGameList }
             state
 
     let gameItemView (game: Game) =
@@ -98,13 +105,35 @@ module MainView =
                         ]
                     ]
                 // Neues Spiel Anlegen, rechts
-                match state.newGame with
+                match state.newGameView with
                 | false -> ()
                 | true ->
                     DockPanel.create [
                         DockPanel.dock Dock.Right
                         DockPanel.children [
-                            TextBlock.create [ TextBlock.fontSize 15.; TextBlock.text "Trage ein neues Spiel ein" ]
+                            TextBlock.create [
+                                TextBlock.dock Dock.Top
+                                TextBlock.fontSize 15.
+                                TextBlock.text "Trage ein neues Spiel ein"
+                            ]
+                            StackPanel.create [
+                                StackPanel.dock Dock.Bottom
+                                StackPanel.orientation Orientation.Vertical
+                                StackPanel.spacing 5
+                                StackPanel.children [
+                                    TextBlock.create [ TextBlock.text "Spielname" ]
+                                    TextBox.create [
+                                        TextBox.watermark "Spielname"
+                                        TextBox.onTextChanged (fun _ -> ())
+                                    ]
+                                    TextBlock.create [ TextBlock.text "Spieler Anzahl" ]
+                                    TextBox.create [
+                                        TextBox.watermark "Spieler Anzahl"
+                                        TextBox.onTextChanged (fun _ -> ())
+                                    ]
+                                    Button.create [ Button.content "Save" ]
+                                ]
+                            ]
                         ]
                     ]
             ]
