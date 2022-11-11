@@ -19,30 +19,38 @@ module Types =
         | BüroRegal
 
     type GameJson =
-        { name: string
-          playerNumbers: int
-          playTime: float
-          lastPlayed: string
-          genre: string
-          secondaryGenre: string
-          shelf: string
-          description: string }
+        {
+            name: string
+            playerNumbers: int
+            playTime: float
+            lastPlayed: string
+            genre: string
+            secondaryGenre: string
+            shelf: string
+            description: string
+        }
 
     type Game =
-        { name: string
-          playerNumbers: int
+        {
+            name: string
+            playerNumbers: int
         //   playTime: float
         //   lastPlayed: DateTime option
         //   genre: GameGenre
         //   secondaryGenre: GameGenre list option
         //   shelf: string
         //   description: string option
-         }
+        }
 
     type Shelf = { name: ShelfName; games: Game list }
 
     type State =
-        { gameList: Game list
-          choosenGame: Game option }
+        {
+            gameList: Game list
+            choosenGame: Game option
+            newGame: bool
+        }
 
-    type Msg = ShowDetail of Game
+    type Msg =
+        | ShowDetail of Game
+        | ShowNewGame
