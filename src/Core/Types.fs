@@ -42,6 +42,8 @@ module Types =
         //   description: string option
         }
 
+    type GameSaveStrukture = { gameList: Game list }
+
     type Shelf = { name: ShelfName; games: Game list }
 
     type State =
