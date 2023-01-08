@@ -45,7 +45,7 @@ module Types =
     type newGame =
         {
             name: string option
-            playerNumber: int option
+            playerNumber: int
         }
 
     type GameSaveStrukture = { gameList: Game list }
@@ -57,7 +57,7 @@ module Types =
             gameList: Game list
             choosenGame: Game option
             newGameView: bool
-            newGame: newGame option
+            newGame: newGame
         }
 
     type Msg =

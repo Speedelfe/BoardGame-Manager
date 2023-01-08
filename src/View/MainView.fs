@@ -1,21 +1,23 @@
 namespace BoardGameManager
 
-open Elmish
-open Avalonia.FuncUI
-open Avalonia.FuncUI.DSL
-open Avalonia.FuncUI.Elmish
-open Avalonia.FuncUI.Hosts
-open Avalonia.FuncUI.Types
-open Avalonia
-open Avalonia.Controls
-open Avalonia.Controls.ApplicationLifetimes
-open Avalonia.Diagnostics
-open Avalonia.Layout
-
-open BoardGameManager.Types
-open BoardGameManager.Functions
-
 module MainView =
+    open Elmish
+    open Avalonia.FuncUI
+    open Avalonia.FuncUI.DSL
+    open Avalonia.FuncUI.Elmish
+    open Avalonia.FuncUI.Hosts
+    open Avalonia.FuncUI.Types
+    open Avalonia
+    open Avalonia.Controls
+    open Avalonia.Controls.ApplicationLifetimes
+    open Avalonia.Diagnostics
+    open Avalonia.Layout
+
+    open BoardGameManager.Types
+    open BoardGameManager.Functions
+    open BoardGameManager.GameFunctions
+
+
     let init () : State = {
         gameList =
             [
@@ -27,7 +29,7 @@ module MainView =
             ]
         choosenGame = None
         newGameView = false
-        newGame = None
+        newGame = createNewPossibleGame ()
     }
 
     let update msg state =

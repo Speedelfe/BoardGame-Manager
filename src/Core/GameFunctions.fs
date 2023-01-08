@@ -3,7 +3,4 @@ namespace BoardGameManager
 open Types
 
 module GameFunctions =
-    let createNewPossibleGame newGame =
-        let newGame = newGame
-        // todo
-        newGame
+    let createNewPossibleGame () = { name = None; playerNumber = 0 }
