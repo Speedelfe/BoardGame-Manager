@@ -1,6 +1,6 @@
 FSharp.Core
 FSharp.Json
 Avalonia.Diagnostics
-JaggerJo.Avalonia.FuncUI.DSL
-JaggerJo.Avalonia.FuncUI.Elmish
+Avalonia.FuncUI
+Avalonia.FuncUI.Elmish
 Elmish
