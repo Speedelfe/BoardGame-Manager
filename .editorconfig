@@ -10,7 +10,7 @@ trim_trailing_whitespace = true
 trim_trailing_whitespace = false
 
 [*.fs]
-fsharp_multiline_block_brackets_on_same_column = true
 fsharp_keep_max_number_of_blank_lines = 1
+fsharp_multiline_bracket_style = aligned
 indent_style = space
 indent_size = 4

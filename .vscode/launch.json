@@ -5,12 +5,12 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": ".NET Core Launch",
+            "name": ".NET Launch",
             "type": "coreclr",
             "request": "launch",
             "preLaunchTask": "build",
-            "program": "${workspaceFolder}/src/bin/Debug/net6.0/BoardGame-Manager.dll",
-            "args": [],
+            "program": "${workspaceFolder}/src/bin/Debug/net8.0/BoardGame-Manager.dll",
+            "args": [ ],
             "cwd": "${workspaceFolder}",
             "console": "internalConsole",
             "stopAtEntry": false

@@ -1,6 +1,8 @@
 FSharp.Core
-FSharp.Json
+
+Avalonia.Desktop
 Avalonia.Diagnostics
-JaggerJo.Avalonia.FuncUI.DSL
-JaggerJo.Avalonia.FuncUI.Elmish
-Elmish
+Avalonia.FuncUI
+Avalonia.FuncUI.Elmish
+Avalonia.Themes.Fluent
+FSharp.Json
