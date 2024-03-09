@@ -4,5 +4,5 @@ Avalonia.Desktop
 Avalonia.Diagnostics
 Avalonia.FuncUI
 Avalonia.FuncUI.Elmish
-Avalonia.Themes.Simple
+Avalonia.Themes.Fluent
 FSharp.Json

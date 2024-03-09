@@ -6,7 +6,7 @@ open Avalonia
 open Avalonia.Controls.ApplicationLifetimes
 open Avalonia.FuncUI.Elmish
 open Avalonia.FuncUI.Hosts
-open Avalonia.Themes.Simple
+open Avalonia.Themes.Fluent
 
 type MainWindow() as this =
     inherit HostWindow()
@@ -34,7 +34,7 @@ type App() =
     inherit Application()
 
     override this.Initialize() =
-        this.Styles.Add(new SimpleTheme())
+        this.Styles.Add(new FluentTheme())
         this.RequestedThemeVariant <- Styling.ThemeVariant.Dark
 
     override this.OnFrameworkInitializationCompleted() =

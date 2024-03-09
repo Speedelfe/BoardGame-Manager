@@ -9,5 +9,5 @@ nuget Avalonia.Desktop
 nuget Avalonia.Diagnostics
 nuget Avalonia.FuncUI
 nuget Avalonia.FuncUI.Elmish
-nuget Avalonia.Themes.Simple
+nuget Avalonia.Themes.Fluent
 nuget FSharp.Json
