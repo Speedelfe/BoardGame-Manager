@@ -5,7 +5,9 @@ storage: none
 
 nuget FSharp.Core
 
+nuget Avalonia.Desktop
 nuget Avalonia.Diagnostics
 nuget Avalonia.FuncUI
 nuget Avalonia.FuncUI.Elmish
+nuget Avalonia.Themes.Simple
 nuget FSharp.Json

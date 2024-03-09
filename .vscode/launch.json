@@ -9,8 +9,8 @@
             "type": "coreclr",
             "request": "launch",
             "preLaunchTask": "build",
-            "program": "${workspaceFolder}/src/bin/Debug/net6.0/BoardGame-Manager.dll",
-            "args": [],
+            "program": "${workspaceFolder}/src/bin/Debug/net8.0/BoardGame-Manager.dll",
+            "args": [ ],
             "cwd": "${workspaceFolder}",
             "console": "internalConsole",
             "stopAtEntry": false
