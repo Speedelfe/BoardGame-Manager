@@ -394,7 +394,9 @@ module MainView =
                     formView state.form state.pendingMsg.IsSome dispatch
                 else
                     match state.chosenGame with
-                    | None -> ()
+                    // Leerer Platzhalter: Das letzte Element füllt den restlichen Platz.
+                    // Ohne ihn wäre das die Liste, und sie stünde dann in der Mitte.
+                    | None -> Panel.create []
                     | Some game -> detailView game state.deleteState dispatch
             ]
         ]
