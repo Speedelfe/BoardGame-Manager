@@ -13,8 +13,8 @@ type MainWindow() as this =
 
     do
         base.Title <- "Boardgame Manager"
-        base.Width <- 800.0
-        base.Height <- 400.0
+        base.Width <- 900.0
+        base.Height <- 500.0
 
         Program.mkSimple MainView.init MainView.update MainView.view
         |> Program.withHost this

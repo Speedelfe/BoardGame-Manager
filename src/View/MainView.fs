@@ -1,6 +1,7 @@
 namespace BoardGameManager
 
 module MainView =
+    open Avalonia
     open Avalonia.Controls
     open Avalonia.FuncUI
     open Avalonia.FuncUI.DSL
@@ -213,6 +214,7 @@ module MainView =
     let detailView (game: Game) (deleteState: DeleteState) dispatch : IView =
         DockPanel.create [
             DockPanel.dock Dock.Right
+            DockPanel.margin 10.
             DockPanel.children [
                 WrapPanel.create [
                     WrapPanel.dock Dock.Bottom
@@ -241,15 +243,21 @@ module MainView =
     let view state dispatch : IView =
         DockPanel.create [
             DockPanel.children [
-                StackPanel.create [
-                    // 'Menü'-Leiste, oben
-                    StackPanel.dock Dock.Top
-                    StackPanel.orientation Orientation.Horizontal
-                    StackPanel.spacing 10.
-                    StackPanel.children [
-                        TextBlock.create [ TextBlock.text "Menü" ]
-                        Button.create [ Button.content "Neues Spiel"; Button.onClick (fun _ -> dispatch ShowNewGame) ]
-                    ]
+                // Menüleiste oben, mit dünner Linie nach unten
+                Border.create [
+                    Border.dock Dock.Top
+                    Border.padding 8.
+                    Border.borderThickness (Thickness(0., 0., 0., 1.))
+                    Border.borderBrush Brushes.Gray
+                    Border.child (
+                        StackPanel.create [
+                            StackPanel.orientation Orientation.Horizontal
+                            StackPanel.spacing 10.
+                            StackPanel.children [
+                                Button.create [ Button.content "Neues Spiel"; Button.onClick (fun _ -> dispatch ShowNewGame) ]
+                            ]
+                        ]
+                    )
                 ]
                 // Fehler beim Laden, unter dem Menü
                 match state.loadError with
@@ -257,7 +265,7 @@ module MainView =
                 | Some message ->
                     TextBlock.create [
                         TextBlock.dock Dock.Top
-                        TextBlock.margin 5.
+                        TextBlock.margin 10.
                         TextBlock.text message
                         TextBlock.foreground Brushes.OrangeRed
                         TextBlock.textWrapping TextWrapping.Wrap
@@ -265,6 +273,8 @@ module MainView =
                 // Liste der Spiele ,unter Menü, links
                 ListBox.create [
                     ListBox.dock Dock.Left
+                    ListBox.width 220.
+                    ListBox.margin 10.
                     ListBox.dataItems state.gameList
                     ListBox.itemTemplate (DataTemplateView<Game>.create gameItemView)
                     // Auswahl in der Liste passend zum ausgewählten Spiel halten.
