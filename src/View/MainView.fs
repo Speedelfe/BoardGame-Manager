@@ -223,8 +223,16 @@ module MainView =
                 StackPanel.create [
                     StackPanel.dock Dock.Top
                     StackPanel.orientation Orientation.Vertical
+                    StackPanel.spacing 5.
                     StackPanel.children [
-                        TextBlock.create [ TextBlock.text $"Spieleranzahl {game.playerNumbers}" ]
+                        // Name des Spiels als Überschrift
+                        TextBlock.create [
+                            TextBlock.text game.name
+                            TextBlock.fontSize 20.
+                            TextBlock.fontWeight FontWeight.Bold
+                            TextBlock.textWrapping TextWrapping.Wrap
+                        ]
+                        TextBlock.create [ TextBlock.text $"Spieler: {game.playerNumbers}" ]
                     ]
                 ]
             ]
