@@ -1,5 +1,6 @@
 namespace BoardGameManager
 
+open System
 open System.IO
 open System.Text.Json
 open System.Text.Json.Serialization
@@ -7,7 +8,16 @@ open System.Text.Json.Serialization
 open Types
 
 module Functions =
-    let gameDataPath = "./data/games.json"
+    // Fester Speicherort der Spieleliste im Benutzerordner, unabhängig davon,
+    // von wo die App gestartet wird.
+    // Windows: C:\Users\<Name>\AppData\Roaming\BoardGame-Manager\games.json
+    // Linux:   ~/.config/BoardGame-Manager/games.json
+    let gameDataPath =
+        Path.Combine(
+            Environment.GetFolderPath Environment.SpecialFolder.ApplicationData,
+            "BoardGame-Manager",
+            "games.json"
+        )
 
     // Einstellungen, damit System.Text.Json F#-Typen (Records, Listen, Option) versteht.
     // Fehlt in der Datei ein Feld (z.B. die id), ist das ein Fehler beim Laden.
@@ -19,7 +29,7 @@ module Functions =
     // Liste von Games in json speichern
     let saveFile dataPath (gameList: Game list) =
         let json = JsonSerializer.Serialize({ gameList = gameList }, jsonOptions)
-        // Ordner "data" anlegen, falls es ihn noch nicht gibt
+        // Ordner anlegen, falls es ihn noch nicht gibt
         Directory.CreateDirectory(Path.GetDirectoryName(Path.GetFullPath dataPath))
         |> ignore
 

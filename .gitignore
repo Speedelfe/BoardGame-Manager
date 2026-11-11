@@ -10,7 +10,8 @@ paket-files/
 .ionide/
 .fake/
 
-# Lokale Spielesammlung, gehoert nicht ins Repository
+# Alter Speicherort der Spielesammlung (liegt jetzt im Benutzerordner),
+# gehoert nicht ins Repository
 data/
 
 # Testergebnisse
