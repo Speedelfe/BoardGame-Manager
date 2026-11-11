@@ -23,7 +23,12 @@ let ``Neues Spiel wird hinten an die Liste angehängt`` () =
 
 [<Fact>]
 let ``Bearbeitetes Spiel ersetzt das alte an derselben Stelle`` () =
-    let changedAzul = { azul with name = "Azul Sommerpavillon"; playerNumbers = 2 }
+    let changedAzul =
+        { azul with
+            name = "Azul Sommerpavillon"
+            playerNumbers = 2
+        }
+
     let result = applyForm games changedAzul
     Assert.Equal<string list>([ "Dixit"; "Azul Sommerpavillon"; "Flügelschlag" ], names result)
     Assert.Equal(2, result.[1].playerNumbers)
@@ -81,7 +86,9 @@ let ``Beim Sortieren ist Groß- und Kleinschreibung egal`` () =
 let ``Umlaute werden wie im Wörterbuch einsortiert`` () =
     // Ä zählt wie A, Ü wie U. Danach wird Buchstabe für Buchstabe verglichen:
     // "Ärger" (Ä-r) vor "Azul" (A-z), und "Überleben" (Ü-b-e) vor "Ubongo" (U-b-o).
-    let result = sortByName (gamesNamed [ "Zug um Zug"; "Azul"; "Ubongo"; "Ärger"; "Überleben" ])
+    let result =
+        sortByName (gamesNamed [ "Zug um Zug"; "Azul"; "Ubongo"; "Ärger"; "Überleben" ])
+
     Assert.Equal<string list>([ "Ärger"; "Azul"; "Überleben"; "Ubongo"; "Zug um Zug" ], names result)
 
 [<Fact>]

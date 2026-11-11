@@ -29,4 +29,5 @@ let fluegelschlag =
 let games = [ dixit; azul; fluegelschlag ]
 
 // Nur die Namen einer Liste, damit Vergleiche gut lesbar sind
-let names (gameList: Game list) = gameList |> List.map (fun game -> game.name)
+let names (gameList: Game list) =
+    gameList |> List.map (fun game -> game.name)

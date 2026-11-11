@@ -20,7 +20,9 @@ module Functions =
     let saveFile dataPath (gameList: Game list) =
         let json = JsonSerializer.Serialize({ gameList = gameList }, jsonOptions)
         // Ordner "data" anlegen, falls es ihn noch nicht gibt
-        Directory.CreateDirectory(Path.GetDirectoryName(Path.GetFullPath dataPath)) |> ignore
+        Directory.CreateDirectory(Path.GetDirectoryName(Path.GetFullPath dataPath))
+        |> ignore
+
         File.WriteAllText(dataPath, json)
 
     // Game Liste aus Json lesen (gleiches Format, das saveFile schreibt).
@@ -41,6 +43,4 @@ module Functions =
                     Error ex.Message
 
             // Erst lesen, dann die ids prüfen. Bei einem Fehler wird nicht weitergeprüft.
-            read
-            |> Result.bind GameFunctions.validateGameIds
-            |> Result.mapError problem
+            read |> Result.bind GameFunctions.validateGameIds |> Result.mapError problem

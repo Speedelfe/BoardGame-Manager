@@ -48,18 +48,18 @@ module GameFunctions =
         | false, _ -> Error "Die Spieleranzahl muss eine Zahl sein."
         | true, number when number < 1 -> Error "Die Spieleranzahl muss mindestens 1 sein."
         | true, number ->
-            Ok {
-                id = id
-                name = name
-                playerNumbers = number
-            }
+            Ok
+                {
+                    id = id
+                    name = name
+                    playerNumbers = number
+                }
 
     // Prüft die ids einer geladenen Spieleliste:
     // keine leere id (lauter Nullen) und keine id doppelt.
     // Ergebnis ist Ok mit der unveränderten Liste oder Error mit einer Fehlermeldung.
     let validateGameIds (games: Game list) : Result<Game list, string> =
-        let emptyIdGames =
-            games |> List.filter (fun game -> game.id = Guid.Empty)
+        let emptyIdGames = games |> List.filter (fun game -> game.id = Guid.Empty)
 
         let duplicateIds =
             games

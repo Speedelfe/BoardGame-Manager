@@ -13,7 +13,6 @@ module MainView =
     open BoardGameManager.Functions
     open BoardGameManager.GameFunctions
 
-
     // Beim Start die gespeicherte Spieleliste laden
     let init () : State =
         let gameList, loadError =
@@ -31,64 +30,61 @@ module MainView =
         }
 
     // Fehlermeldung im Formular setzen
-    let private withFormError message state =
-        { state with
-            form =
-                { state.form with
-                    error = Some message
-                }
-        }
+    let private withFormError message state = {
+        state with
+            form = { state.form with error = Some message }
+    }
 
     let update msg state =
         match msg with
-        | ShowDetail game ->
-            { state with
+        | ShowDetail game -> {
+            state with
                 choosenGame = Some game
                 formView = false
                 deleteState = NotAsked
-            }
-        | ShowNewGame ->
-            { state with
+          }
+        | ShowNewGame -> {
+            state with
                 choosenGame = None
                 formView = true
                 form = emptyForm ()
                 deleteState = NotAsked
-            }
+          }
         // Das gerade ausgewählte Spiel ins Formular laden.
         // Es bleibt in der Liste markiert, damit man sieht, was man bearbeitet.
         | EditChoosenGame ->
             match state.choosenGame with
             | None -> state
-            | Some game ->
-                { state with
+            | Some game -> {
+                state with
                     formView = true
                     form = formFromGame game
                     deleteState = NotAsked
-                }
+              }
         // Bei jeder Eingabe merken wir uns den Text und blenden einen alten Fehler aus
-        | FormNameChanged text ->
-            { state with
-                form =
-                    { state.form with
+        | FormNameChanged text -> {
+            state with
+                form = {
+                    state.form with
                         nameInput = text
                         error = None
-                    }
-            }
-        | FormPlayerNumbersChanged text ->
-            { state with
-                form =
-                    { state.form with
+                }
+          }
+        | FormPlayerNumbersChanged text -> {
+            state with
+                form = {
+                    state.form with
                         playerNumbersInput = text
                         error = None
-                    }
-            }
+                }
+          }
         // Beim Bearbeiten zurück zu den Details des Spiels, sonst einfach Formular schließen
-        | CancelForm ->
-            { state with
+        | CancelForm -> {
+            state with
                 choosenGame = state.form.editing
                 formView = false
                 form = emptyForm ()
-            }
+          }
         | SaveForm when state.loadError.IsSome ->
             state
             |> withFormError "Speichern ist gesperrt, weil die Spieleliste beim Start nicht gelesen werden konnte."
@@ -101,11 +97,12 @@ module MainView =
                 try
                     saveFile gameDataPath newGameList
                     // Formular schließen und das gespeicherte Spiel gleich anzeigen
-                    { state with
-                        gameList = newGameList
-                        choosenGame = Some game
-                        formView = false
-                        form = emptyForm ()
+                    {
+                        state with
+                            gameList = newGameList
+                            choosenGame = Some game
+                            formView = false
+                            form = emptyForm ()
                     }
                 with ex ->
                     state |> withFormError $"Speichern hat nicht geklappt: {ex.Message}"
@@ -121,15 +118,16 @@ module MainView =
                 try
                     saveFile gameDataPath newGameList
 
-                    { state with
-                        gameList = newGameList
-                        choosenGame = None
-                        deleteState = NotAsked
+                    {
+                        state with
+                            gameList = newGameList
+                            choosenGame = None
+                            deleteState = NotAsked
                     }
-                with ex ->
-                    { state with
+                with ex -> {
+                    state with
                         deleteState = DeleteFailed $"Löschen hat nicht geklappt: {ex.Message}"
-                    }
+                }
 
     let gameItemView (game: Game) =
         TextBlock.create [ TextBlock.text game.name ]
@@ -187,11 +185,16 @@ module MainView =
     // Sie schicken nur Nachrichten, nicht das Spiel selbst:
     // update weiß über state.choosenGame, welches Spiel gemeint ist.
     let private detailButtons (deleteState: DeleteState) dispatch : IView list =
-        let normalButtons: IView list =
-            [
-                Button.create [ Button.content "Bearbeiten"; Button.onClick (fun _ -> dispatch EditChoosenGame) ]
-                Button.create [ Button.content "Löschen"; Button.onClick (fun _ -> dispatch AskDeleteChoosenGame) ]
+        let normalButtons: IView list = [
+            Button.create [
+                Button.content "Bearbeiten"
+                Button.onClick (fun _ -> dispatch EditChoosenGame)
             ]
+            Button.create [
+                Button.content "Löschen"
+                Button.onClick (fun _ -> dispatch AskDeleteChoosenGame)
+            ]
+        ]
 
         let errorText (message: string) : IView =
             TextBlock.create [
@@ -202,12 +205,17 @@ module MainView =
 
         match deleteState with
         | NotAsked -> normalButtons
-        | Confirming ->
-            [
-                TextBlock.create [ TextBlock.text "Wirklich löschen?"; TextBlock.verticalAlignment VerticalAlignment.Center ]
-                Button.create [ Button.content "Ja, löschen"; Button.onClick (fun _ -> dispatch ConfirmDelete) ]
-                Button.create [ Button.content "Abbrechen"; Button.onClick (fun _ -> dispatch CancelDelete) ]
+        | Confirming -> [
+            TextBlock.create [
+                TextBlock.text "Wirklich löschen?"
+                TextBlock.verticalAlignment VerticalAlignment.Center
             ]
+            Button.create [
+                Button.content "Ja, löschen"
+                Button.onClick (fun _ -> dispatch ConfirmDelete)
+            ]
+            Button.create [ Button.content "Abbrechen"; Button.onClick (fun _ -> dispatch CancelDelete) ]
+          ]
         | DeleteFailed message -> errorText message :: normalButtons
 
     // Detail Infos eines Spieles, rechts
@@ -254,7 +262,10 @@ module MainView =
                             StackPanel.orientation Orientation.Horizontal
                             StackPanel.spacing 10.
                             StackPanel.children [
-                                Button.create [ Button.content "Neues Spiel"; Button.onClick (fun _ -> dispatch ShowNewGame) ]
+                                Button.create [
+                                    Button.content "Neues Spiel"
+                                    Button.onClick (fun _ -> dispatch ShowNewGame)
+                                ]
                             ]
                         ]
                     )
