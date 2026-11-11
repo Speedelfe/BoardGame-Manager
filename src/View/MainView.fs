@@ -22,7 +22,7 @@ module MainView =
 
         {
             gameList = gameList
-            choosenGame = None
+            chosenGame = None
             formView = false
             form = emptyForm ()
             loadError = loadError
@@ -58,14 +58,14 @@ module MainView =
         | ShowNewGame when hasUnsavedInput state -> { state with pendingMsg = Some msg }
         | ShowDetail game -> {
             state with
-                choosenGame = Some game
+                chosenGame = Some game
                 formView = false
                 deleteState = NotAsked
                 pendingMsg = None
           }
         | ShowNewGame -> {
             state with
-                choosenGame = None
+                chosenGame = None
                 formView = true
                 form = emptyForm ()
                 deleteState = NotAsked
@@ -85,8 +85,8 @@ module MainView =
         | CancelDiscard -> { state with pendingMsg = None }
         // Das gerade ausgewählte Spiel ins Formular laden.
         // Es bleibt in der Liste markiert, damit man sieht, was man bearbeitet.
-        | EditChoosenGame ->
-            match state.choosenGame with
+        | EditChosenGame ->
+            match state.chosenGame with
             | None -> state
             | Some game -> {
                 state with
@@ -114,7 +114,7 @@ module MainView =
         // Beim Bearbeiten zurück zu den Details des Spiels, sonst einfach Formular schließen
         | CancelForm -> {
             state with
-                choosenGame = state.form.editing
+                chosenGame = state.form.editing
                 formView = false
                 form = emptyForm ()
                 pendingMsg = None
@@ -134,7 +134,7 @@ module MainView =
                     {
                         state with
                             gameList = newGameList
-                            choosenGame = Some game
+                            chosenGame = Some game
                             formView = false
                             form = emptyForm ()
                             pendingMsg = None
@@ -142,10 +142,10 @@ module MainView =
                 with ex ->
                     state |> withFormError $"Speichern hat nicht geklappt: {ex.Message}"
         // Löschen in zwei Schritten: erst nachfragen, dann wirklich löschen
-        | AskDeleteChoosenGame -> { state with deleteState = Confirming }
+        | AskDeleteChosenGame -> { state with deleteState = Confirming }
         | CancelDelete -> { state with deleteState = NotAsked }
         | ConfirmDelete ->
-            match state.choosenGame with
+            match state.chosenGame with
             | None -> state
             | Some game ->
                 let newGameList = removeGame state.gameList game
@@ -156,7 +156,7 @@ module MainView =
                     {
                         state with
                             gameList = newGameList
-                            choosenGame = None
+                            chosenGame = None
                             deleteState = NotAsked
                     }
                 with ex -> {
@@ -240,16 +240,16 @@ module MainView =
 
     // Knöpfe unten in der Detailansicht.
     // Sie schicken nur Nachrichten, nicht das Spiel selbst:
-    // update weiß über state.choosenGame, welches Spiel gemeint ist.
+    // update weiß über state.chosenGame, welches Spiel gemeint ist.
     let private detailButtons (deleteState: DeleteState) dispatch : IView list =
         let normalButtons: IView list = [
             Button.create [
                 Button.content "Bearbeiten"
-                Button.onClick (fun _ -> dispatch EditChoosenGame)
+                Button.onClick (fun _ -> dispatch EditChosenGame)
             ]
             Button.create [
                 Button.content "Löschen"
-                Button.onClick (fun _ -> dispatch AskDeleteChoosenGame)
+                Button.onClick (fun _ -> dispatch AskDeleteChosenGame)
             ]
         ]
 
@@ -358,7 +358,7 @@ module MainView =
                     // Läuft gerade die Nachfrage "Änderungen verwerfen?" für ein angeklicktes Spiel,
                     // bleibt dieses markiert. Bei "Nein" springt die Markierung zurück.
                     ListBox.selectedItem (
-                        match state.pendingMsg, state.choosenGame with
+                        match state.pendingMsg, state.chosenGame with
                         | Some(ShowDetail game), _ -> box game
                         | _, Some game -> box game
                         | _, None -> null
@@ -376,7 +376,7 @@ module MainView =
                 if state.formView then
                     formView state.form state.pendingMsg.IsSome dispatch
                 else
-                    match state.choosenGame with
+                    match state.chosenGame with
                     | None -> ()
                     | Some game -> detailView game state.deleteState dispatch
             ]

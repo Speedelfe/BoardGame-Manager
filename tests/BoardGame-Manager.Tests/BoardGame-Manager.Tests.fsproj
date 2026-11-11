@@ -4,6 +4,7 @@
     <!-- xUnit v3: Testprojekte sind eigene kleine Programme -->
     <OutputType>Exe</OutputType>
     <TargetFramework>net10.0</TargetFramework>
+    <RootNamespace>BoardGameManager.Tests</RootNamespace>
     <IsPackable>false</IsPackable>
     <NoWarn>$(NoWarn);NU1510</NoWarn>
   </PropertyGroup>

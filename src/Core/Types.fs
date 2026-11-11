@@ -16,7 +16,7 @@ module Types =
         | WohnwandLinks
         | WohnwandRechts
         | SofaSchrank
-        | BüroRegal
+        | BueroRegal
 
     type Game =
         {
@@ -45,7 +45,7 @@ module Types =
             editing: Game option
         }
 
-    type GameSaveStrukture = { gameList: Game list }
+    type GameSaveStructure = { gameList: Game list }
 
     type Shelf = { name: ShelfName; games: Game list }
 
@@ -58,7 +58,7 @@ module Types =
     type Msg =
         | ShowDetail of Game
         | ShowNewGame
-        | EditChoosenGame
+        | EditChosenGame
         | FormNameChanged of string
         | FormPlayerNumbersChanged of string
         | SaveForm
@@ -66,14 +66,14 @@ module Types =
         // Antwort auf die Frage "Änderungen verwerfen?"
         | ConfirmDiscard
         | CancelDiscard
-        | AskDeleteChoosenGame
+        | AskDeleteChosenGame
         | ConfirmDelete
         | CancelDelete
 
     type State =
         {
             gameList: Game list
-            choosenGame: Game option
+            chosenGame: Game option
             formView: bool
             form: GameForm
             // Fehler beim Laden der Datei. Solange es einen gibt, ist Speichern gesperrt,

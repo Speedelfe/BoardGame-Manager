@@ -48,7 +48,7 @@ module Functions =
             let read =
                 try
                     let text = File.ReadAllText dataPath
-                    Ok(JsonSerializer.Deserialize<GameSaveStrukture>(text, jsonOptions).gameList)
+                    Ok(JsonSerializer.Deserialize<GameSaveStructure>(text, jsonOptions).gameList)
                 with ex ->
                     Error ex.Message
 
