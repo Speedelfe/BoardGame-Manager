@@ -125,12 +125,12 @@ module MainView =
                                 StackPanel.children [
                                     TextBlock.create [ TextBlock.text "Spielname" ]
                                     TextBox.create [
-                                        TextBox.watermark "Spielname"
+                                        TextBox.placeHolderText "Spielname"
                                         TextBox.onTextChanged (fun _ -> ())
                                     ]
                                     TextBlock.create [ TextBlock.text "Spieler Anzahl" ]
                                     TextBox.create [
-                                        TextBox.watermark "Spieler Anzahl"
+                                        TextBox.placeHolderText "Spieler Anzahl"
                                         TextBox.onTextChanged (fun _ -> ())
                                     ]
                                     Button.create [ Button.content "Save" ]

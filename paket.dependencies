@@ -1,11 +1,17 @@
-source https://www.nuget.org/api/v2
+source https://api.nuget.org/v3/index.json
 
 storage: none
+framework: net10.0
+// Indirekte Pakete (z.B. SkiaSharp) in der Version nehmen, die Avalonia verlangt,
+// statt immer die allerneueste
+strategy: min
 
-nuget FSharp.Core
+nuget FSharp.Core = 10.1.402
 
-nuget Avalonia.Diagnostics
-nuget Elmish
-nuget FSharp.Json
-nuget JaggerJo.Avalonia.FuncUI.DSL
-nuget JaggerJo.Avalonia.FuncUI.Elmish
+nuget Avalonia = 12.1.4
+nuget Avalonia.Desktop = 12.1.4
+nuget Avalonia.Themes.Fluent = 12.1.4
+nuget Avalonia.FuncUI ~> 2.0
+nuget Avalonia.FuncUI.Elmish ~> 2.0
+nuget Elmish ~> 5.0
+nuget FSharp.SystemTextJson ~> 1.4

@@ -1,12 +1,19 @@
 namespace BoardGameManager
 
-open FSharp.Json
 open System.IO
+open System.Text.Json
+open System.Text.Json.Serialization
 
 open Types
 
 module Functions =
     let gameDataPath = "./data/games.json"
+
+    // Einstellungen, damit System.Text.Json F#-Typen (Records, Listen, Option) versteht
+    let private jsonOptions =
+        let options = JsonSerializerOptions(WriteIndented = true)
+        options.Converters.Add(JsonFSharpConverter())
+        options
 
     let createGameFromJson (json: GameJson) =
         {
@@ -26,9 +33,9 @@ module Functions =
         | false -> []
         | true ->
             File.ReadAllText dataPath
-            |> Json.deserialize<GameJson list>
+            |> fun text -> JsonSerializer.Deserialize<GameJson list>(text, jsonOptions)
 
     // Liste von Games in json speichern
     let saveFile (gameList: Game list) =
-        let json = { gameList = gameList } |> Json.serialize
+        let json = JsonSerializer.Serialize({ gameList = gameList }, jsonOptions)
         File.WriteAllText(gameDataPath, json)
