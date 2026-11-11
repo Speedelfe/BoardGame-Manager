@@ -4,7 +4,10 @@
 [![Build](https://img.shields.io/github/actions/workflow/status/Speedelfe/BoardGame-Manager/build.yml?style=flat-square)](https://github.com/Speedelfe/BoardGame-Manager/actions/workflows/build.yml)
 
 Eine kleine Desktop-App, um die eigene Brettspielsammlung zu verwalten.
-Geschrieben in F# mit [Avalonia.FuncUI](https://github.com/fsprojects/Avalonia.FuncUI).
+Geschrieben in TypeScript mit [Vue](https://vuejs.org/) und [Electron](https://www.electronjs.org/).
+
+Die ursprüngliche Fassung war in F# mit Avalonia.FuncUI geschrieben. Sie ist über die Git-Historie
+weiter erreichbar.
 
 ## Was die App kann
 
@@ -25,37 +28,41 @@ liegen.
 Kann die Datei beim Start nicht gelesen werden, zeigt die App eine Fehlermeldung und sperrt das
 Speichern, damit die Datei nicht überschrieben wird.
 
+Ort und Format der Datei sind dieselben wie in der früheren F#-Fassung, eine vorhandene Sammlung
+wird also weiter gelesen.
+
 ## Entwicklung
 
-Benötigt wird das [.NET SDK 10](https://dotnet.microsoft.com/download). Empfohlen ist VS Code mit
-der Erweiterung Ionide. Alternativ gibt es einen fertigen Devcontainer.
+Benötigt wird [Node.js](https://nodejs.org/) ab Version 22.12 (am besten die aktuelle LTS-Version).
 
-Einmalig nach dem Klonen die Werkzeuge (Paket, Fantomas) einrichten:
+Einmalig nach dem Klonen die Pakete laden:
 
 ```
-dotnet tool restore
+npm install
 ```
 
-| Aufgabe            | Befehl                          |
-| ------------------ | ------------------------------- |
-| Bauen              | `dotnet build`                  |
-| Starten            | `dotnet run --project src/`     |
-| Tests ausführen    | `dotnet test`                   |
-| Code formatieren   | `dotnet fantomas src tests`     |
-
-Zum Starten mit Debugger in VS Code F5 drücken.
-
-### Devcontainer
-
-Im Devcontainer läuft die App auf einem virtuellen Bildschirm. Zum Ansehen im Browser
-`http://localhost:6080` öffnen oder mit einem VNC-Programm zu `localhost:5901` verbinden.
-Das Standardpasswort ist `vscode`.
+| Aufgabe                                  | Befehl              |
+| ---------------------------------------- | ------------------- |
+| Starten (Änderungen erscheinen sofort)   | `npm run dev`       |
+| Starten mit Testsammlung (`.dev-data/`)  | `npm run dev:test`  |
+| Tests ausführen                          | `npm test`          |
+| Typen prüfen                             | `npm run typecheck` |
+| Bauen                                    | `npm run build`     |
+| Gebaute App starten                      | `npm start`         |
 
 ## Aufbau
 
-- `src/Core` – Datentypen und Logik (Prüfen der Eingaben, Laden und Speichern)
-- `src/View` – Oberfläche und Programmablauf
-- `tests` – Tests für die Logik (xUnit)
+Der Code ist in Schichten aufgeteilt. Jede Schicht kennt nur die Schichten, die in dieser Liste
+über ihr stehen:
+
+- `src/domain` – die Fachlogik: Spiel, Name, Spieleranzahl, Sammlung und ihre Regeln. Kennt weder
+  Vue noch Dateien.
+- `src/application` – die Abläufe: Spiel speichern, Spiel löschen.
+- `src/infrastructure` – die Technik: Speichern als JSON-Datei und die Verbindung zwischen
+  Oberfläche und Hintergrundteil.
+- `src/ui` – die Oberfläche: Vue-Komponenten und der Programmablauf (`gameManager.ts`).
+- `src/main` und `src/preload` – der Start von Electron: Fenster öffnen und alles zusammenstecken.
+- `tests` – Tests (Vitest), aufgeteilt wie `src`.
 
 ## Lizenz
 

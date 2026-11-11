@@ -1,0 +1,90 @@
+// Beispielspiele und Helfer, die alle Tests benutzen können
+import { mkdir, rm } from 'node:fs/promises'
+import { join } from 'node:path'
+
+import type { Game, GameData } from '../src/domain/Game'
+import { GameCollection } from '../src/domain/GameCollection'
+import type { GameRepository } from '../src/domain/GameRepository'
+import { ok, type Result } from '../src/domain/Result'
+
+// Feste IDs, damit man sie in Tests und Fehlermeldungen wiedererkennt
+export const dixitData: GameData = {
+  id: '11111111-1111-1111-1111-111111111111',
+  name: 'Dixit',
+  playerCount: 3,
+}
+
+export const azulData: GameData = {
+  id: '22222222-2222-2222-2222-222222222222',
+  name: 'Azul',
+  playerCount: 4,
+}
+
+export const fluegelschlagData: GameData = {
+  id: '33333333-3333-3333-3333-333333333333',
+  name: 'Flügelschlag',
+  playerCount: 5,
+}
+
+export const gamesData: GameData[] = [dixitData, azulData, fluegelschlagData]
+
+// Erwartet ein Ok und gibt den Wert zurück, sonst schlägt der Test fehl
+export function expectOk<T>(result: Result<T>): T {
+  if (!result.ok) {
+    throw new Error(`Ok erwartet, aber Fehler: ${result.error}`)
+  }
+  return result.value
+}
+
+// Erwartet einen Fehler und gibt die Meldung zurück, sonst schlägt der Test fehl
+export function expectError<T>(result: Result<T>): string {
+  if (result.ok) {
+    throw new Error(`Fehler erwartet, aber Ok: ${JSON.stringify(result.value)}`)
+  }
+  return result.error
+}
+
+// Sammlung aus einfachen Daten. Die Daten müssen gültig sein.
+export function collectionOf(data: GameData[]): GameCollection {
+  return expectOk(GameCollection.restore(data))
+}
+
+// Die drei Beispielspiele als Sammlung und einzeln
+export const games = collectionOf(gamesData)
+export const [dixit, azul, fluegelschlag] = games.games as [Game, Game, Game]
+
+// Nur die Namen, damit Vergleiche gut lesbar sind
+export function names(gameList: readonly Game[]): string[] {
+  return gameList.map((game) => game.name.text)
+}
+
+// Repository für Tests, das nur im Arbeitsspeicher "speichert" und mitzählt
+export class MemoryGameRepository implements GameRepository {
+  saved: GameCollection | null = null
+  saveCount = 0
+
+  constructor(private readonly stored: GameCollection = GameCollection.empty()) {}
+
+  async load(): Promise<Result<GameCollection>> {
+    return ok(this.saved ?? this.stored)
+  }
+
+  async save(collection: GameCollection): Promise<void> {
+    this.saved = collection
+    this.saveCount += 1
+  }
+}
+
+// Legt einen frischen, leeren Ordner an, führt den Test damit aus
+// und löscht den Ordner danach wieder (auch wenn der Test fehlschlägt).
+// Die Ordner liegen im Projekt unter tests/.tmp, nie in der echten Spielesammlung.
+export async function withTestFolder(test: (folder: string) => Promise<void>): Promise<void> {
+  const folder = join(import.meta.dirname, '.tmp', crypto.randomUUID())
+  await mkdir(folder, { recursive: true })
+
+  try {
+    await test(folder)
+  } finally {
+    await rm(folder, { recursive: true, force: true })
+  }
+}

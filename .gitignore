@@ -1,18 +1,14 @@
-# Ignore compiled stuff
-bin/
-obj/
+# Node: heruntergeladene Pakete und gebaute Dateien
+node_modules/
+out/
+dist/
 
-# Ignore paket stuff
-packages/
-paket-files/
+# Ordner, in die die Tests schreiben
+tests/.tmp/
 
-# Ignore Ionide stuff
-.ionide/
-.fake/
+# Testsammlung fuer "npm run dev:test"
+.dev-data/
 
 # Alter Speicherort der Spielesammlung (liegt jetzt im Benutzerordner),
 # gehoert nicht ins Repository
 data/
-
-# Testergebnisse
-TestResults/
