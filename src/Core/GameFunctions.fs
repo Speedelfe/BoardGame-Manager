@@ -2,9 +2,13 @@ namespace BoardGameManager
 
 open System
 open System.Globalization
+open System.Numerics
 open Types
 
 module GameFunctions =
+    // Größte erlaubte Spieleranzahl. Fängt Tippfehler wie 5000 ab.
+    let maxPlayerNumbers = 100
+
     // Leeres Formular für ein neues Spiel
     let emptyForm () =
         {
@@ -53,17 +57,21 @@ module GameFunctions =
             otherGames
             |> List.exists (fun game -> String.Equals(game.name, name, StringComparison.OrdinalIgnoreCase))
 
-        match Int32.TryParse(form.playerNumbersInput.Trim()) with
+        // BigInteger statt Int32, damit auch riesige Zahlen als Zahl erkannt werden
+        // und die passende Meldung "höchstens ..." bekommen.
+        match BigInteger.TryParse(form.playerNumbersInput.Trim()) with
         | _ when name = "" -> Error "Bitte gib einen Spielnamen ein."
         | _ when alreadyExists -> Error $"Das Spiel \"{name}\" gibt es schon."
         | false, _ -> Error "Die Spieleranzahl muss eine Zahl sein."
-        | true, number when number < 1 -> Error "Die Spieleranzahl muss mindestens 1 sein."
+        | true, number when number < BigInteger.One -> Error "Die Spieleranzahl muss mindestens 1 sein."
+        | true, number when number > BigInteger maxPlayerNumbers ->
+            Error $"Die Spieleranzahl darf höchstens {maxPlayerNumbers} sein."
         | true, number ->
             Ok
                 {
                     id = id
                     name = name
-                    playerNumbers = number
+                    playerNumbers = int number
                 }
 
     // Prüft die ids einer geladenen Spieleliste:
@@ -93,13 +101,15 @@ module GameFunctions =
             Ok games
 
     // Prüft den Inhalt einer geladenen Spieleliste mit den gleichen Regeln wie das Formular:
-    // kein leerer Name, Spieleranzahl mindestens 1 und kein Name doppelt.
+    // kein leerer Name, Spieleranzahl von 1 bis maxPlayerNumbers und kein Name doppelt.
     // Ergebnis ist Ok mit der unveränderten Liste oder Error mit einer Fehlermeldung.
     let validateGameContents (games: Game list) : Result<Game list, string> =
         let namelessGames =
             games |> List.filter (fun game -> String.IsNullOrWhiteSpace game.name)
 
-        let wrongPlayerNumbers = games |> List.filter (fun game -> game.playerNumbers < 1)
+        let wrongPlayerNumbers =
+            games
+            |> List.filter (fun game -> game.playerNumbers < 1 || game.playerNumbers > maxPlayerNumbers)
 
         if not namelessGames.IsEmpty then
             let ids =

@@ -26,14 +26,23 @@ module Functions =
         options.Converters.Add(JsonFSharpConverter())
         options
 
-    // Liste von Games in json speichern
-    let saveFile dataPath (gameList: Game list) =
+    // Liste von Games in json speichern.
+    // Geschrieben wird erst in eine Hilfsdatei (.tmp), die dann die echte Datei ersetzt.
+    // So bleibt die alte Liste heil, falls beim Schreiben etwas schiefgeht.
+    // Der Stand vor dem Speichern bleibt als Sicherungskopie (.bak) liegen.
+    let saveFile (dataPath: string) (gameList: Game list) =
         let json = JsonSerializer.Serialize({ gameList = gameList }, jsonOptions)
         // Ordner anlegen, falls es ihn noch nicht gibt
         Directory.CreateDirectory(Path.GetDirectoryName(Path.GetFullPath dataPath))
         |> ignore
 
-        File.WriteAllText(dataPath, json)
+        let tempPath = dataPath + ".tmp"
+        File.WriteAllText(tempPath, json)
+
+        if File.Exists dataPath then
+            File.Replace(tempPath, dataPath, dataPath + ".bak")
+        else
+            File.Move(tempPath, dataPath)
 
     // Game Liste aus Json lesen (gleiches Format, das saveFile schreibt).
     // Ergebnis ist Ok mit der Liste oder Error mit einer Fehlermeldung.

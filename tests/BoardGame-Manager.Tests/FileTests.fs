@@ -110,3 +110,29 @@ let ``Doppelter Spielname in der Datei ergibt einen Fehler`` () =
         saveFile path [ dixit; { azul with name = "dixit" } ]
         let message = expectLoadError path
         Assert.Contains("mehrfach", message))
+
+// ----- Sicheres Speichern mit Sicherungskopie -----
+
+[<Fact>]
+let ``Erstes Speichern legt noch keine Sicherungskopie an`` () =
+    withTestFolder (fun folder ->
+        let path = Path.Combine(folder, "games.json")
+        saveFile path games
+        Assert.False(File.Exists(path + ".bak")))
+
+[<Fact>]
+let ``Sicherungskopie enthält den Stand vor dem letzten Speichern`` () =
+    withTestFolder (fun folder ->
+        let path = Path.Combine(folder, "games.json")
+        saveFile path [ dixit ]
+        saveFile path games
+        Assert.Equal(Ok games, loadFile path)
+        Assert.Equal(Ok [ dixit ], loadFile (path + ".bak")))
+
+[<Fact>]
+let ``Nach dem Speichern bleibt keine Hilfsdatei liegen`` () =
+    withTestFolder (fun folder ->
+        let path = Path.Combine(folder, "games.json")
+        saveFile path [ dixit ]
+        saveFile path games
+        Assert.False(File.Exists(path + ".tmp")))

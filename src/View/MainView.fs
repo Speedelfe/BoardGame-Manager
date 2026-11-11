@@ -144,6 +144,12 @@ module MainView =
         // Löschen in zwei Schritten: erst nachfragen, dann wirklich löschen
         | AskDeleteChosenGame -> { state with deleteState = Confirming }
         | CancelDelete -> { state with deleteState = NotAsked }
+        // Wie beim Speichern: nach einem Ladefehler wird die Datei nicht angefasst
+        | ConfirmDelete when state.loadError.IsSome -> {
+            state with
+                deleteState =
+                    DeleteFailed "Löschen ist gesperrt, weil die Spieleliste beim Start nicht gelesen werden konnte."
+          }
         | ConfirmDelete ->
             match state.chosenGame with
             | None -> state

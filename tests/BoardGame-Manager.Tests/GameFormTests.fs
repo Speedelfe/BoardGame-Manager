@@ -69,6 +69,9 @@ let ``Leerzeichen am Anfang und Ende werden entfernt`` () =
 [<InlineData("Monopoly", "2.5", "Die Spieleranzahl muss eine Zahl sein.")>]
 [<InlineData("Monopoly", "0", "Die Spieleranzahl muss mindestens 1 sein.")>]
 [<InlineData("Monopoly", "-2", "Die Spieleranzahl muss mindestens 1 sein.")>]
+[<InlineData("Monopoly", "101", "Die Spieleranzahl darf höchstens 100 sein.")>]
+[<InlineData("Monopoly", "5000", "Die Spieleranzahl darf höchstens 100 sein.")>]
+[<InlineData("Monopoly", "99999999999999999999", "Die Spieleranzahl darf höchstens 100 sein.")>]
 let ``Ungültige Eingaben ergeben die passende Fehlermeldung`` (name: string, players: string, expected: string) =
     let message = validateGameForm games (newForm name players) |> expectError
     Assert.Equal(expected, message)
@@ -147,3 +150,8 @@ let ``Eine Fehlermeldung allein zählt nicht als Änderung`` () =
                 error = Some "Fehler"
             }
     )
+
+[<Fact>]
+let ``Die größte erlaubte Spieleranzahl wird angenommen`` () =
+    let game = validateGameForm games (newForm "Monopoly" "100") |> expectOk
+    Assert.Equal(100, game.playerNumbers)

@@ -143,6 +143,7 @@ let ``Spiel ohne Namen wird erkannt`` (name: string) =
 [<Theory>]
 [<InlineData(0)>]
 [<InlineData(-3)>]
+[<InlineData(101)>]
 let ``Spiel mit ungültiger Spieleranzahl wird erkannt`` (players: int) =
     let result = validateGameContents [ dixit; { azul with playerNumbers = players } ]
     Assert.Equal(Error $"Diese Spiele haben eine ungültige Spieleranzahl: \"Azul\" ({players})", result)
