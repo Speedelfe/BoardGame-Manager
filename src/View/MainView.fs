@@ -188,6 +188,8 @@ module MainView =
         StackPanel.create [
             StackPanel.dock Dock.Right
             StackPanel.width 300.
+            // Links ausrichten wie die Detailansicht, sonst steht das Formular mittig im freien Platz
+            StackPanel.horizontalAlignment HorizontalAlignment.Left
             StackPanel.margin 10.
             StackPanel.orientation Orientation.Vertical
             StackPanel.spacing 5.
