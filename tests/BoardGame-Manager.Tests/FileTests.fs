@@ -94,3 +94,19 @@ let ``Leere ID in der Datei ergibt einen Fehler`` () =
         saveFile path [ { dixit with id = Guid.Empty } ]
         let message = expectLoadError path
         Assert.Contains("leere ID", message))
+
+[<Fact>]
+let ``Ungültige Spieleranzahl in der Datei ergibt einen Fehler`` () =
+    withTestFolder (fun folder ->
+        let path = Path.Combine(folder, "games.json")
+        saveFile path [ { dixit with playerNumbers = 0 } ]
+        let message = expectLoadError path
+        Assert.Contains("ungültige Spieleranzahl", message))
+
+[<Fact>]
+let ``Doppelter Spielname in der Datei ergibt einen Fehler`` () =
+    withTestFolder (fun folder ->
+        let path = Path.Combine(folder, "games.json")
+        saveFile path [ dixit; { azul with name = "dixit" } ]
+        let message = expectLoadError path
+        Assert.Contains("mehrfach", message))

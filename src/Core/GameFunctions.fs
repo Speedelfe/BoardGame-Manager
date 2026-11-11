@@ -92,6 +92,46 @@ module GameFunctions =
         else
             Ok games
 
+    // Prüft den Inhalt einer geladenen Spieleliste mit den gleichen Regeln wie das Formular:
+    // kein leerer Name, Spieleranzahl mindestens 1 und kein Name doppelt.
+    // Ergebnis ist Ok mit der unveränderten Liste oder Error mit einer Fehlermeldung.
+    let validateGameContents (games: Game list) : Result<Game list, string> =
+        let namelessGames =
+            games |> List.filter (fun game -> String.IsNullOrWhiteSpace game.name)
+
+        let wrongPlayerNumbers = games |> List.filter (fun game -> game.playerNumbers < 1)
+
+        if not namelessGames.IsEmpty then
+            let ids =
+                namelessGames |> List.map (fun game -> string game.id) |> String.concat ", "
+
+            Error $"Diese Spiele haben keinen Namen (ID): {ids}"
+        elif not wrongPlayerNumbers.IsEmpty then
+            let details =
+                wrongPlayerNumbers
+                |> List.map (fun game -> $"\"{game.name}\" ({game.playerNumbers})")
+                |> String.concat ", "
+
+            Error $"Diese Spiele haben eine ungültige Spieleranzahl: {details}"
+        else
+            // Groß-/Kleinschreibung und Leerzeichen am Rand sind egal, wie im Formular
+            let duplicateNames =
+                games
+                |> List.groupBy (fun game -> game.name.Trim().ToUpperInvariant())
+                |> List.filter (fun (_, gamesWithName) -> gamesWithName.Length > 1)
+                |> List.map (fun (_, gamesWithName) -> $"\"{gamesWithName.Head.name.Trim()}\"")
+
+            if not duplicateNames.IsEmpty then
+                let details = duplicateNames |> String.concat ", "
+                Error $"Diese Spielnamen gibt es mehrfach: {details}"
+            else
+                Ok games
+
+    // Alle Prüfungen für eine geladene Spieleliste: erst die ids, dann der Inhalt.
+    // Beim ersten Fehler wird nicht weitergeprüft.
+    let validateLoadedGames (games: Game list) : Result<Game list, string> =
+        games |> validateGameIds |> Result.bind validateGameContents
+
     // Deutsche Sortierregeln, unabhängig von der Spracheinstellung des Rechners
     let private germanCulture = CultureInfo.GetCultureInfo "de-DE"
 

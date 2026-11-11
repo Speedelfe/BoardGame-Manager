@@ -52,5 +52,5 @@ module Functions =
                 with ex ->
                     Error ex.Message
 
-            // Erst lesen, dann die ids prüfen. Bei einem Fehler wird nicht weitergeprüft.
-            read |> Result.bind GameFunctions.validateGameIds |> Result.mapError problem
+            // Erst lesen, dann ids und Inhalt prüfen. Bei einem Fehler wird nicht weitergeprüft.
+            read |> Result.bind GameFunctions.validateLoadedGames |> Result.mapError problem

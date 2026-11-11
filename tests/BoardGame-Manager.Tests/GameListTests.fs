@@ -126,3 +126,52 @@ let ``Spiele mit gleicher ID werden erkannt`` () =
         Assert.Contains("\"Kopie von Dixit\"", message)
         Assert.Contains(string dixit.id, message)
         Assert.DoesNotContain("Azul", message)
+
+// ----- Inhalt prüfen (validateGameContents) -----
+
+[<Fact>]
+let ``Liste mit gültigen Spielen ist in Ordnung`` () =
+    Assert.Equal(Ok games, validateGameContents games)
+
+[<Theory>]
+[<InlineData("")>]
+[<InlineData("   ")>]
+let ``Spiel ohne Namen wird erkannt`` (name: string) =
+    let result = validateGameContents [ dixit; { azul with name = name } ]
+    Assert.Equal(Error $"Diese Spiele haben keinen Namen (ID): {azul.id}", result)
+
+[<Theory>]
+[<InlineData(0)>]
+[<InlineData(-3)>]
+let ``Spiel mit ungültiger Spieleranzahl wird erkannt`` (players: int) =
+    let result = validateGameContents [ dixit; { azul with playerNumbers = players } ]
+    Assert.Equal(Error $"Diese Spiele haben eine ungültige Spieleranzahl: \"Azul\" ({players})", result)
+
+[<Theory>]
+[<InlineData("Dixit")>]
+[<InlineData("dixit")>]
+[<InlineData(" DIXIT ")>]
+let ``Doppelter Spielname wird erkannt`` (name: string) =
+    let result =
+        validateGameContents [ dixit; azul; { fluegelschlag with name = name } ]
+
+    Assert.Equal(Error "Diese Spielnamen gibt es mehrfach: \"Dixit\"", result)
+
+[<Fact>]
+let ``Geladene Liste: IDs werden vor dem Inhalt geprüft`` () =
+    let result =
+        validateLoadedGames
+            [
+                { dixit with
+                    id = Guid.Empty
+                    name = ""
+                }
+            ]
+
+    match result with
+    | Error message -> Assert.Contains("leere ID", message)
+    | Ok _ -> failwith "Fehler erwartet"
+
+[<Fact>]
+let ``Geladene Liste: gültige Spiele sind in Ordnung`` () =
+    Assert.Equal(Ok games, validateLoadedGames games)
