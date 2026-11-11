@@ -49,6 +49,10 @@ npm install
 | Typen prüfen                             | `npm run typecheck` |
 | Bauen                                    | `npm run build`     |
 | Gebaute App starten                      | `npm start`         |
+| Programm (`.exe`) erstellen              | `npm run dist`      |
+
+`npm run dist` erstellt `dist/BoardGame-Manager.exe`. Die Datei lässt sich ohne Installation
+starten und an einen beliebigen Ort kopieren.
 
 ## Aufbau
 
