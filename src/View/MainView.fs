@@ -26,6 +26,7 @@ module MainView =
             formView = false
             form = emptyForm ()
             loadError = loadError
+            deleteState = NotAsked
         }
 
     // Fehlermeldung im Formular setzen
@@ -43,12 +44,14 @@ module MainView =
             { state with
                 choosenGame = Some game
                 formView = false
+                deleteState = NotAsked
             }
         | ShowNewGame ->
             { state with
                 choosenGame = None
                 formView = true
                 form = emptyForm ()
+                deleteState = NotAsked
             }
         // Das gerade ausgewählte Spiel ins Formular laden.
         // Es bleibt in der Liste markiert, damit man sieht, was man bearbeitet.
@@ -59,6 +62,7 @@ module MainView =
                 { state with
                     formView = true
                     form = formFromGame game
+                    deleteState = NotAsked
                 }
         // Bei jeder Eingabe merken wir uns den Text und blenden einen alten Fehler aus
         | FormNameChanged text ->
@@ -104,6 +108,27 @@ module MainView =
                     }
                 with ex ->
                     state |> withFormError $"Speichern hat nicht geklappt: {ex.Message}"
+        // Löschen in zwei Schritten: erst nachfragen, dann wirklich löschen
+        | AskDeleteChoosenGame -> { state with deleteState = Confirming }
+        | CancelDelete -> { state with deleteState = NotAsked }
+        | ConfirmDelete ->
+            match state.choosenGame with
+            | None -> state
+            | Some game ->
+                let newGameList = removeGame state.gameList game
+
+                try
+                    saveFile gameDataPath newGameList
+
+                    { state with
+                        gameList = newGameList
+                        choosenGame = None
+                        deleteState = NotAsked
+                    }
+                with ex ->
+                    { state with
+                        deleteState = DeleteFailed $"Löschen hat nicht geklappt: {ex.Message}"
+                    }
 
     let gameItemView (game: Game) =
         TextBlock.create [ TextBlock.text game.name ]
@@ -157,19 +182,43 @@ module MainView =
             ]
         ]
 
+    // Knöpfe unten in der Detailansicht.
+    // Sie schicken nur Nachrichten, nicht das Spiel selbst:
+    // update weiß über state.choosenGame, welches Spiel gemeint ist.
+    let private detailButtons (deleteState: DeleteState) dispatch : IView list =
+        let normalButtons: IView list =
+            [
+                Button.create [ Button.content "Bearbeiten"; Button.onClick (fun _ -> dispatch EditChoosenGame) ]
+                Button.create [ Button.content "Löschen"; Button.onClick (fun _ -> dispatch AskDeleteChoosenGame) ]
+            ]
+
+        let errorText (message: string) : IView =
+            TextBlock.create [
+                TextBlock.text message
+                TextBlock.foreground Brushes.OrangeRed
+                TextBlock.textWrapping TextWrapping.Wrap
+            ]
+
+        match deleteState with
+        | NotAsked -> normalButtons
+        | Confirming ->
+            [
+                TextBlock.create [ TextBlock.text "Wirklich löschen?"; TextBlock.verticalAlignment VerticalAlignment.Center ]
+                Button.create [ Button.content "Ja, löschen"; Button.onClick (fun _ -> dispatch ConfirmDelete) ]
+                Button.create [ Button.content "Abbrechen"; Button.onClick (fun _ -> dispatch CancelDelete) ]
+            ]
+        | DeleteFailed message -> errorText message :: normalButtons
+
     // Detail Infos eines Spieles, rechts
-    let detailView (game: Game) dispatch : IView =
+    let detailView (game: Game) (deleteState: DeleteState) dispatch : IView =
         DockPanel.create [
             DockPanel.dock Dock.Right
             DockPanel.children [
-                StackPanel.create [
-                    StackPanel.dock Dock.Bottom
-                    StackPanel.orientation Orientation.Horizontal
-                    StackPanel.children [
-                        // Nur die Nachricht schicken, nicht das Spiel selbst:
-                        // update weiß über state.choosenGame, welches Spiel gemeint ist.
-                        Button.create [ Button.content "Edit"; Button.onClick (fun _ -> dispatch EditChoosenGame) ]
-                    ]
+                WrapPanel.create [
+                    WrapPanel.dock Dock.Bottom
+                    WrapPanel.orientation Orientation.Horizontal
+                    WrapPanel.itemSpacing 10.
+                    WrapPanel.children (detailButtons deleteState dispatch)
                 ]
                 StackPanel.create [
                     StackPanel.dock Dock.Top
@@ -232,6 +281,6 @@ module MainView =
                 else
                     match state.choosenGame with
                     | None -> ()
-                    | Some game -> detailView game dispatch
+                    | Some game -> detailView game state.deleteState dispatch
             ]
         ]

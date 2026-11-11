@@ -61,6 +61,12 @@ module Types =
 
     type Shelf = { name: ShelfName; games: Game list }
 
+    // Wo wir beim Löschen des ausgewählten Spiels gerade stehen
+    type DeleteState =
+        | NotAsked // nichts passiert, normale Detailansicht
+        | Confirming // "Wirklich löschen?" wird angezeigt
+        | DeleteFailed of string // Löschen hat nicht geklappt, mit Fehlermeldung
+
     type State =
         {
             gameList: Game list
@@ -70,6 +76,7 @@ module Types =
             // Fehler beim Laden der Datei. Solange es einen gibt, ist Speichern gesperrt,
             // damit die (vielleicht nur kaputte) Datei nicht überschrieben wird.
             loadError: string option
+            deleteState: DeleteState
         }
 
     type Msg =
@@ -80,3 +87,6 @@ module Types =
         | FormPlayerNumbersChanged of string
         | SaveForm
         | CancelForm
+        | AskDeleteChoosenGame
+        | ConfirmDelete
+        | CancelDelete

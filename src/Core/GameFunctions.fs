@@ -80,6 +80,10 @@ module GameFunctions =
         else
             Ok games
 
+    // Spiel mit dieser id aus der Liste entfernen
+    let removeGame (existingGames: Game list) (game: Game) =
+        existingGames |> List.filter (fun g -> g.id <> game.id)
+
     // Neues Spiel hinten anhängen oder das bearbeitete Spiel (gleiche id) an seiner Stelle ersetzen
     let applyForm (existingGames: Game list) (game: Game) =
         if existingGames |> List.exists (fun g -> g.id = game.id) then
