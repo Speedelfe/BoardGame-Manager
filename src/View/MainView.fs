@@ -240,7 +240,7 @@ module MainView =
                     StackPanel.spacing 10.
                     StackPanel.children [
                         TextBlock.create [ TextBlock.text "Menü" ]
-                        Button.create [ Button.content "New Game"; Button.onClick (fun _ -> dispatch ShowNewGame) ]
+                        Button.create [ Button.content "Neues Spiel"; Button.onClick (fun _ -> dispatch ShowNewGame) ]
                     ]
                 ]
                 // Fehler beim Laden, unter dem Menü
