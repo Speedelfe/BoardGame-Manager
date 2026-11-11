@@ -16,18 +16,6 @@ module Functions =
         options.Converters.Add(JsonFSharpConverter())
         options
 
-    let createGameFromJson (json: GameJson) =
-        {
-            name = json.name
-            playerNumbers = json.playerNumbers
-            playTime = json.playTime
-            lastPlayed = json.lastPlayed
-            genre = json.genre
-            secondaryGenre = json.secondaryGenre
-            shelf = json.shelf
-            description = json.description
-        }
-
     // Liste von Games in json speichern
     let saveFile dataPath (gameList: Game list) =
         let json = JsonSerializer.Serialize({ gameList = gameList }, jsonOptions)

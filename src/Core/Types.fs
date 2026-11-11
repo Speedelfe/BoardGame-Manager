@@ -18,18 +18,6 @@ module Types =
         | SofaSchrank
         | BüroRegal
 
-    type GameJson =
-        {
-            name: string
-            playerNumbers: int
-            playTime: float
-            lastPlayed: string
-            genre: string
-            secondaryGenre: string
-            shelf: string
-            description: string
-        }
-
     type Game =
         {
             // Feste, eindeutige Kennung. Ändert sich nie, auch nicht beim Umbenennen.
