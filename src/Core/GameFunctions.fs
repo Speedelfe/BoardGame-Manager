@@ -1,6 +1,7 @@
 namespace BoardGameManager
 
 open System
+open System.Globalization
 open Types
 
 module GameFunctions =
@@ -79,6 +80,15 @@ module GameFunctions =
             Error $"Diese Spiele haben die gleiche ID: {details}"
         else
             Ok games
+
+    // Deutsche Sortierregeln, unabhängig von der Spracheinstellung des Rechners
+    let private germanCulture = CultureInfo.GetCultureInfo "de-DE"
+
+    // Spiele alphabetisch nach Namen sortieren:
+    // Groß-/Kleinschreibung egal, Umlaute wie im Wörterbuch (Ä bei A).
+    let sortByName (games: Game list) =
+        games
+        |> List.sortWith (fun a b -> String.Compare(a.name, b.name, germanCulture, CompareOptions.IgnoreCase))
 
     // Spiel mit dieser id aus der Liste entfernen
     let removeGame (existingGames: Game list) (game: Game) =

@@ -275,7 +275,8 @@ module MainView =
                     ListBox.dock Dock.Left
                     ListBox.width 220.
                     ListBox.margin 10.
-                    ListBox.dataItems state.gameList
+                    // Nur die Anzeige wird sortiert, die Datei behält die Reihenfolge des Anlegens
+                    ListBox.dataItems (sortByName state.gameList)
                     ListBox.itemTemplate (DataTemplateView<Game>.create gameItemView)
                     // Auswahl in der Liste passend zum ausgewählten Spiel halten.
                     // Ohne Auswahl (null) kann man danach jedes Spiel wieder anklicken.

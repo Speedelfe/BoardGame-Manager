@@ -56,6 +56,43 @@ let ``Löschen eines unbekannten Spiels ändert nichts`` () =
 
     Assert.Equal<string list>(names games, names (removeGame games unknown))
 
+// ----- Sortieren (sortByName) -----
+
+// Spiele nur mit Namen, für die Sortier-Tests
+let gamesNamed (gameNames: string list) =
+    gameNames
+    |> List.map (fun name ->
+        {
+            id = Guid.NewGuid()
+            name = name
+            playerNumbers = 2
+        })
+
+[<Fact>]
+let ``Spiele werden alphabetisch sortiert`` () =
+    Assert.Equal<string list>([ "Azul"; "Dixit"; "Flügelschlag" ], names (sortByName [ fluegelschlag; dixit; azul ]))
+
+[<Fact>]
+let ``Beim Sortieren ist Groß- und Kleinschreibung egal`` () =
+    let result = sortByName (gamesNamed [ "dixit"; "Azul"; "carcassonne"; "Brass" ])
+    Assert.Equal<string list>([ "Azul"; "Brass"; "carcassonne"; "dixit" ], names result)
+
+[<Fact>]
+let ``Umlaute werden wie im Wörterbuch einsortiert`` () =
+    // Ä zählt wie A, Ü wie U. Danach wird Buchstabe für Buchstabe verglichen:
+    // "Ärger" (Ä-r) vor "Azul" (A-z), und "Überleben" (Ü-b-e) vor "Ubongo" (U-b-o).
+    let result = sortByName (gamesNamed [ "Zug um Zug"; "Azul"; "Ubongo"; "Ärger"; "Überleben" ])
+    Assert.Equal<string list>([ "Ärger"; "Azul"; "Überleben"; "Ubongo"; "Zug um Zug" ], names result)
+
+[<Fact>]
+let ``Sortieren ändert die ursprüngliche Liste nicht`` () =
+    let original = [ fluegelschlag; dixit; azul ]
+    sortByName original |> ignore
+    Assert.Equal<string list>([ "Flügelschlag"; "Dixit"; "Azul" ], names original)
+
+[<Fact>]
+let ``Leere Liste sortieren ergibt eine leere Liste`` () = Assert.Empty(sortByName [])
+
 // ----- ids prüfen (validateGameIds) -----
 
 [<Fact>]
