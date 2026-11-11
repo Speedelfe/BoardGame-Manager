@@ -3,9 +3,9 @@ name: Build
 on:
   push:
     branches:
-      - "*"
+      - "**"
     tags-ignore:
-      - "*"
+      - "**"
     paths-ignore:
       - "**.md"
       - ".vscode/**"

@@ -19,6 +19,9 @@ Die Spieleliste liegt als `games.json` im Benutzerordner, egal von wo die App ge
 - Windows: `C:\Users\<Name>\AppData\Roaming\BoardGame-Manager\games.json`
 - Linux: `~/.config/BoardGame-Manager/games.json`
 
+Bei jedem Speichern bleibt der Stand davor als Sicherungskopie `games.json.bak` im selben Ordner
+liegen.
+
 Kann die Datei beim Start nicht gelesen werden, zeigt die App eine Fehlermeldung und sperrt das
 Speichern, damit die Datei nicht überschrieben wird.
 
@@ -53,3 +56,7 @@ Das Standardpasswort ist `vscode`.
 - `src/Core` – Datentypen und Logik (Prüfen der Eingaben, Laden und Speichern)
 - `src/View` – Oberfläche und Programmablauf
 - `tests` – Tests für die Logik (xUnit)
+
+## Lizenz
+
+[MIT](LICENSE)
