@@ -38,4 +38,6 @@ module Functions =
     // Liste von Games in json speichern
     let saveFile (gameList: Game list) =
         let json = JsonSerializer.Serialize({ gameList = gameList }, jsonOptions)
+        // Ordner "data" anlegen, falls es ihn noch nicht gibt
+        Directory.CreateDirectory(Path.GetDirectoryName gameDataPath) |> ignore
         File.WriteAllText(gameDataPath, json)

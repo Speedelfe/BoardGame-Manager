@@ -42,10 +42,14 @@ module Types =
         //   description: string option
         }
 
+    // Was gerade im Formular "Neues Spiel" eingetippt ist.
+    // Beides bleibt erst einmal Text. Ob die Spieleranzahl wirklich eine Zahl ist,
+    // prüfen wir beim Speichern (siehe GameFunctions.validateNewGame).
     type newGame =
         {
-            name: string option
-            playerNumber: int
+            nameInput: string
+            playerNumbersInput: string
+            error: string option
         }
 
     type GameSaveStrukture = { gameList: Game list }
@@ -63,4 +67,7 @@ module Types =
     type Msg =
         | ShowDetail of Game
         | ShowNewGame
-        | SaveNewGame of Game
+        | NewGameNameChanged of string
+        | NewGamePlayerNumbersChanged of string
+        | SaveNewGame
+        | CancelNewGame

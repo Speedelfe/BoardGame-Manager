@@ -9,3 +9,6 @@ paket-files/
 # Ignore Ionide stuff
 .ionide/
 .fake/
+
+# Lokale Spielesammlung, gehoert nicht ins Repository
+data/
