@@ -28,6 +28,11 @@ let expectLoadError path =
     | Error message -> message
     | Ok games -> failwith $"Fehler erwartet, aber Ok: {games}"
 
+// Nur die eigentliche Ursache aus der Fehlermeldung, also der Teil hinter dem Dateipfad
+let causeOf (message: string) =
+    let marker = "konnte nicht gelesen werden: "
+    message.Substring(message.IndexOf marker + marker.Length)
+
 [<Fact>]
 let ``Fehlende Datei ergibt eine leere Liste`` () =
     withTestFolder (fun folder ->
@@ -70,7 +75,8 @@ let ``Spiel ohne ID ergibt einen Fehler`` () =
         let path = Path.Combine(folder, "games.json")
         File.WriteAllText(path, """{ "gameList": [ { "name": "Dixit", "playerNumbers": 3 } ] }""")
         let message = expectLoadError path
-        Assert.Contains("id", message))
+        // Nur die Ursache prüfen, nicht den Dateipfad davor (der könnte zufällig "id" enthalten)
+        Assert.Contains("id", causeOf message))
 
 [<Fact>]
 let ``Ungültige ID ergibt einen Fehler`` () =

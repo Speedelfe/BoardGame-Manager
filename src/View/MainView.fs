@@ -13,10 +13,11 @@ module MainView =
     open BoardGameManager.Functions
     open BoardGameManager.GameFunctions
 
-    // Beim Start die gespeicherte Spieleliste laden
-    let init () : State =
+    // Beim Start die gespeicherte Spieleliste laden.
+    // dataPath ist die Datei der Spieleliste. Tests geben hier eine eigene Datei an.
+    let initWith (dataPath: string) : State =
         let gameList, loadError =
-            match loadFile gameDataPath with
+            match loadFile dataPath with
             | Ok games -> games, None
             | Error message -> [], Some message
 
@@ -30,6 +31,9 @@ module MainView =
             pendingMsg = None
         }
 
+    // Die App selbst lädt immer die echte Spieleliste
+    let init () : State = initWith gameDataPath
+
     // Formular ist offen und enthält Eingaben, die noch nicht gespeichert sind
     let private hasUnsavedInput state =
         state.formView && formHasChanges state.form
@@ -40,7 +44,9 @@ module MainView =
             form = { state.form with error = Some message }
     }
 
-    let rec update msg state =
+    // Der Programmablauf: aus einer Nachricht und dem alten Stand wird der neue Stand.
+    // dataPath ist die Datei der Spieleliste. Tests geben hier eine eigene Datei an.
+    let rec updateWith (dataPath: string) msg state =
         match msg with
         // Nach einem Ladefehler kann nichts gespeichert werden, also auch kein Formular öffnen
         | ShowNewGame when state.loadError.IsSome -> state
@@ -76,7 +82,7 @@ module MainView =
             match state.pendingMsg with
             | None -> state
             | Some pending ->
-                update pending {
+                updateWith dataPath pending {
                     state with
                         formView = false
                         pendingMsg = None
@@ -129,7 +135,7 @@ module MainView =
                 let newGameList = applyForm state.gameList game
 
                 try
-                    saveFile gameDataPath newGameList
+                    saveFile dataPath newGameList
                     // Formular schließen und das gespeicherte Spiel gleich anzeigen
                     {
                         state with
@@ -157,7 +163,7 @@ module MainView =
                 let newGameList = removeGame state.gameList game
 
                 try
-                    saveFile gameDataPath newGameList
+                    saveFile dataPath newGameList
 
                     {
                         state with
@@ -169,6 +175,9 @@ module MainView =
                     state with
                         deleteState = DeleteFailed $"Löschen hat nicht geklappt: {ex.Message}"
                 }
+
+    // Die App selbst arbeitet immer mit der echten Spieleliste
+    let update msg state = updateWith gameDataPath msg state
 
     let gameItemView (game: Game) =
         TextBlock.create [ TextBlock.text game.name ]

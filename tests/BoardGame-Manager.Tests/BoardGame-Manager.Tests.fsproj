@@ -13,6 +13,7 @@
     <Compile Include="GameFormTests.fs" />
     <Compile Include="GameListTests.fs" />
     <Compile Include="FileTests.fs" />
+    <Compile Include="UpdateTests.fs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\src\BoardGame-Manager.fsproj" />
