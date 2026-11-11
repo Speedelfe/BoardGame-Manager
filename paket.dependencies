@@ -15,3 +15,13 @@ nuget Avalonia.FuncUI ~> 2.0
 nuget Avalonia.FuncUI.Elmish ~> 2.0
 nuget Elmish ~> 5.0
 nuget FSharp.SystemTextJson ~> 1.4
+
+// Pakete nur für das Testprojekt
+group Test
+    source https://api.nuget.org/v3/index.json
+    storage: none
+    framework: net10.0
+    strategy: min
+
+    nuget FSharp.Core = 10.1.402
+    nuget xunit.v3 = 4.0.2

@@ -12,3 +12,6 @@ paket-files/
 
 # Lokale Spielesammlung, gehoert nicht ins Repository
 data/
+
+# Testergebnisse
+TestResults/
