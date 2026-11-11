@@ -23,9 +23,18 @@ module MainView =
         {
             gameList = gameList
             choosenGame = None
-            newGameView = false
-            newGame = createNewPossibleGame ()
+            formView = false
+            form = emptyForm ()
             loadError = loadError
+        }
+
+    // Fehlermeldung im Formular setzen
+    let private withFormError message state =
+        { state with
+            form =
+                { state.form with
+                    error = Some message
+                }
         }
 
     let update msg state =
@@ -33,77 +42,74 @@ module MainView =
         | ShowDetail game ->
             { state with
                 choosenGame = Some game
-                newGameView = false
+                formView = false
             }
         | ShowNewGame ->
             { state with
                 choosenGame = None
-                newGameView = true
-                newGame = createNewPossibleGame ()
+                formView = true
+                form = emptyForm ()
             }
+        // Das gerade ausgewählte Spiel ins Formular laden.
+        // Es bleibt in der Liste markiert, damit man sieht, was man bearbeitet.
+        | EditChoosenGame ->
+            match state.choosenGame with
+            | None -> state
+            | Some game ->
+                { state with
+                    formView = true
+                    form = formFromGame game
+                }
         // Bei jeder Eingabe merken wir uns den Text und blenden einen alten Fehler aus
-        | NewGameNameChanged text ->
+        | FormNameChanged text ->
             { state with
-                newGame =
-                    { state.newGame with
+                form =
+                    { state.form with
                         nameInput = text
                         error = None
                     }
             }
-        | NewGamePlayerNumbersChanged text ->
+        | FormPlayerNumbersChanged text ->
             { state with
-                newGame =
-                    { state.newGame with
+                form =
+                    { state.form with
                         playerNumbersInput = text
                         error = None
                     }
             }
-        | CancelNewGame ->
+        // Beim Bearbeiten zurück zu den Details des Spiels, sonst einfach Formular schließen
+        | CancelForm ->
             { state with
-                newGameView = false
-                newGame = createNewPossibleGame ()
+                choosenGame = state.form.editing
+                formView = false
+                form = emptyForm ()
             }
-        | SaveNewGame when state.loadError.IsSome ->
-            { state with
-                newGame =
-                    { state.newGame with
-                        error = Some "Speichern ist gesperrt, weil die Spieleliste beim Start nicht gelesen werden konnte."
-                    }
-            }
-        | SaveNewGame ->
-            match validateNewGame state.gameList state.newGame with
-            | Error message ->
-                { state with
-                    newGame =
-                        { state.newGame with
-                            error = Some message
-                        }
-                }
+        | SaveForm when state.loadError.IsSome ->
+            state
+            |> withFormError "Speichern ist gesperrt, weil die Spieleliste beim Start nicht gelesen werden konnte."
+        | SaveForm ->
+            match validateGameForm state.gameList state.form with
+            | Error message -> state |> withFormError message
             | Ok game ->
-                let newGameList = List.append state.gameList [ game ]
+                let newGameList = applyForm state.gameList state.form game
 
                 try
                     saveFile newGameList
-                    // Formular schließen und das neue Spiel gleich anzeigen
+                    // Formular schließen und das gespeicherte Spiel gleich anzeigen
                     { state with
                         gameList = newGameList
                         choosenGame = Some game
-                        newGameView = false
-                        newGame = createNewPossibleGame ()
+                        formView = false
+                        form = emptyForm ()
                     }
                 with ex ->
-                    { state with
-                        newGame =
-                            { state.newGame with
-                                error = Some $"Speichern hat nicht geklappt: {ex.Message}"
-                            }
-                    }
+                    state |> withFormError $"Speichern hat nicht geklappt: {ex.Message}"
 
     let gameItemView (game: Game) =
         TextBlock.create [ TextBlock.text game.name ]
 
-    // Formular "Neues Spiel", rechts
-    let newGameView (form: newGame) dispatch : IView =
+    // Formular zum Anlegen oder Bearbeiten eines Spiels, rechts
+    let formView (form: GameForm) dispatch : IView =
         StackPanel.create [
             StackPanel.dock Dock.Right
             StackPanel.width 300.
@@ -111,18 +117,25 @@ module MainView =
             StackPanel.orientation Orientation.Vertical
             StackPanel.spacing 5.
             StackPanel.children [
-                TextBlock.create [ TextBlock.fontSize 15.; TextBlock.text "Trage ein neues Spiel ein" ]
+                TextBlock.create [
+                    TextBlock.fontSize 15.
+                    TextBlock.text (
+                        match form.editing with
+                        | None -> "Trage ein neues Spiel ein"
+                        | Some original -> $"\"{original.name}\" bearbeiten"
+                    )
+                ]
                 TextBlock.create [ TextBlock.text "Spielname" ]
                 TextBox.create [
                     TextBox.placeHolderText "Spielname"
                     TextBox.text form.nameInput
-                    TextBox.onTextChanged (fun text -> dispatch (NewGameNameChanged text))
+                    TextBox.onTextChanged (fun text -> dispatch (FormNameChanged text))
                 ]
                 TextBlock.create [ TextBlock.text "Spieleranzahl" ]
                 TextBox.create [
                     TextBox.placeHolderText "Spieleranzahl"
                     TextBox.text form.playerNumbersInput
-                    TextBox.onTextChanged (fun text -> dispatch (NewGamePlayerNumbersChanged text))
+                    TextBox.onTextChanged (fun text -> dispatch (FormPlayerNumbersChanged text))
                 ]
                 // Fehlermeldung nur anzeigen, wenn es eine gibt
                 match form.error with
@@ -137,8 +150,32 @@ module MainView =
                     StackPanel.orientation Orientation.Horizontal
                     StackPanel.spacing 10.
                     StackPanel.children [
-                        Button.create [ Button.content "Speichern"; Button.onClick (fun _ -> dispatch SaveNewGame) ]
-                        Button.create [ Button.content "Abbrechen"; Button.onClick (fun _ -> dispatch CancelNewGame) ]
+                        Button.create [ Button.content "Speichern"; Button.onClick (fun _ -> dispatch SaveForm) ]
+                        Button.create [ Button.content "Abbrechen"; Button.onClick (fun _ -> dispatch CancelForm) ]
+                    ]
+                ]
+            ]
+        ]
+
+    // Detail Infos eines Spieles, rechts
+    let detailView (game: Game) dispatch : IView =
+        DockPanel.create [
+            DockPanel.dock Dock.Right
+            DockPanel.children [
+                StackPanel.create [
+                    StackPanel.dock Dock.Bottom
+                    StackPanel.orientation Orientation.Horizontal
+                    StackPanel.children [
+                        // Nur die Nachricht schicken, nicht das Spiel selbst:
+                        // update weiß über state.choosenGame, welches Spiel gemeint ist.
+                        Button.create [ Button.content "Edit"; Button.onClick (fun _ -> dispatch EditChoosenGame) ]
+                    ]
+                ]
+                StackPanel.create [
+                    StackPanel.dock Dock.Top
+                    StackPanel.orientation Orientation.Vertical
+                    StackPanel.children [
+                        TextBlock.create [ TextBlock.text $"Spieleranzahl {game.playerNumbers}" ]
                     ]
                 ]
             ]
@@ -189,32 +226,12 @@ module MainView =
                         | _ -> ())
 
                 ]
-                // Detail Infos eines Spieles, rechts -> choosenGame Some enthält ausgewähles Spiel, sonst none
-                match state.choosenGame with
-                | None -> ()
-                | Some _ ->
-                    DockPanel.create [
-                        DockPanel.dock Dock.Right
-                        DockPanel.children [
-                            StackPanel.create [
-                                StackPanel.dock Dock.Bottom
-                                StackPanel.orientation Orientation.Horizontal
-                                StackPanel.children [ Button.create [ Button.content "Edit" ] ]
-                            ]
-                            StackPanel.create [
-                                StackPanel.dock Dock.Top
-                                StackPanel.orientation Orientation.Vertical
-                                StackPanel.children [
-                                    match state.choosenGame with
-                                    | None -> ()
-                                    | Some game ->
-                                        TextBlock.create [ TextBlock.text $"Spieleranzahl {game.playerNumbers}" ]
-                                ]
-                            ]
-                        ]
-                    ]
-                // Neues Spiel Anlegen, rechts
-                if state.newGameView then
-                    newGameView state.newGame dispatch
+                // Rechts entweder das Formular oder die Details des ausgewählten Spiels
+                if state.formView then
+                    formView state.form dispatch
+                else
+                    match state.choosenGame with
+                    | None -> ()
+                    | Some game -> detailView game dispatch
             ]
         ]

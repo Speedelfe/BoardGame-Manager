@@ -42,14 +42,17 @@ module Types =
         //   description: string option
         }
 
-    // Was gerade im Formular "Neues Spiel" eingetippt ist.
+    // Was gerade im Formular (neues Spiel oder Spiel bearbeiten) eingetippt ist.
     // Beides bleibt erst einmal Text. Ob die Spieleranzahl wirklich eine Zahl ist,
-    // prüfen wir beim Speichern (siehe GameFunctions.validateNewGame).
-    type newGame =
+    // prüfen wir beim Speichern (siehe GameFunctions.validateGameForm).
+    type GameForm =
         {
             nameInput: string
             playerNumbersInput: string
             error: string option
+            // None = neues Spiel anlegen
+            // Some game = dieses Spiel wird bearbeitet (so wie es vorher war)
+            editing: Game option
         }
 
     type GameSaveStrukture = { gameList: Game list }
@@ -60,8 +63,8 @@ module Types =
         {
             gameList: Game list
             choosenGame: Game option
-            newGameView: bool
-            newGame: newGame
+            formView: bool
+            form: GameForm
             // Fehler beim Laden der Datei. Solange es einen gibt, ist Speichern gesperrt,
             // damit die (vielleicht nur kaputte) Datei nicht überschrieben wird.
             loadError: string option
@@ -70,7 +73,8 @@ module Types =
     type Msg =
         | ShowDetail of Game
         | ShowNewGame
-        | NewGameNameChanged of string
-        | NewGamePlayerNumbersChanged of string
-        | SaveNewGame
-        | CancelNewGame
+        | EditChoosenGame
+        | FormNameChanged of string
+        | FormPlayerNumbersChanged of string
+        | SaveForm
+        | CancelForm
