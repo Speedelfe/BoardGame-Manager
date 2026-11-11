@@ -27,13 +27,19 @@ module Functions =
             description = json.description
         }
 
-    // Game Liste aus Json lesen
-    let loadFile dataPath =
-        match File.Exists dataPath with
-        | false -> []
-        | true ->
-            File.ReadAllText dataPath
-            |> fun text -> JsonSerializer.Deserialize<GameJson list>(text, jsonOptions)
+    // Game Liste aus Json lesen (gleiches Format, das saveFile schreibt).
+    // Ergebnis ist Ok mit der Liste oder Error mit einer Fehlermeldung.
+    // Gibt es die Datei noch nicht, ist das kein Fehler, sondern eine leere Liste.
+    let loadFile dataPath : Result<Game list, string> =
+        if not (File.Exists dataPath) then
+            Ok []
+        else
+            try
+                let text = File.ReadAllText dataPath
+                let saved = JsonSerializer.Deserialize<GameSaveStrukture>(text, jsonOptions)
+                Ok saved.gameList
+            with ex ->
+                Error $"Die Spieleliste ({Path.GetFullPath dataPath}) konnte nicht gelesen werden: {ex.Message}"
 
     // Liste von Games in json speichern
     let saveFile (gameList: Game list) =

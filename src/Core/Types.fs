@@ -62,6 +62,9 @@ module Types =
             choosenGame: Game option
             newGameView: bool
             newGame: newGame
+            // Fehler beim Laden der Datei. Solange es einen gibt, ist Speichern gesperrt,
+            // damit die (vielleicht nur kaputte) Datei nicht überschrieben wird.
+            loadError: string option
         }
 
     type Msg =

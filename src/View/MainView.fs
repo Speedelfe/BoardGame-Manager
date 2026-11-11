@@ -13,19 +13,20 @@ module MainView =
     open BoardGameManager.GameFunctions
 
 
-    let init () : State = {
-        gameList =
-            [
-                { name = "Dixit"; playerNumbers = 2 }
-                {
-                    name = "Flügelschlag"
-                    playerNumbers = 5
-                }
-            ]
-        choosenGame = None
-        newGameView = false
-        newGame = createNewPossibleGame ()
-    }
+    // Beim Start die gespeicherte Spieleliste laden
+    let init () : State =
+        let gameList, loadError =
+            match loadFile gameDataPath with
+            | Ok games -> games, None
+            | Error message -> [], Some message
+
+        {
+            gameList = gameList
+            choosenGame = None
+            newGameView = false
+            newGame = createNewPossibleGame ()
+            loadError = loadError
+        }
 
     let update msg state =
         match msg with
@@ -61,6 +62,13 @@ module MainView =
             { state with
                 newGameView = false
                 newGame = createNewPossibleGame ()
+            }
+        | SaveNewGame when state.loadError.IsSome ->
+            { state with
+                newGame =
+                    { state.newGame with
+                        error = Some "Speichern ist gesperrt, weil die Spieleliste beim Start nicht gelesen werden konnte."
+                    }
             }
         | SaveNewGame ->
             match validateNewGame state.gameList state.newGame with
@@ -149,6 +157,17 @@ module MainView =
                         Button.create [ Button.content "New Game"; Button.onClick (fun _ -> dispatch ShowNewGame) ]
                     ]
                 ]
+                // Fehler beim Laden, unter dem Menü
+                match state.loadError with
+                | None -> ()
+                | Some message ->
+                    TextBlock.create [
+                        TextBlock.dock Dock.Top
+                        TextBlock.margin 5.
+                        TextBlock.text message
+                        TextBlock.foreground Brushes.OrangeRed
+                        TextBlock.textWrapping TextWrapping.Wrap
+                    ]
                 // Liste der Spiele ,unter Menü, links
                 ListBox.create [
                     ListBox.dock Dock.Left
