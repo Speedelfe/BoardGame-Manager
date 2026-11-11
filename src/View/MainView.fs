@@ -91,10 +91,10 @@ module MainView =
             match validateGameForm state.gameList state.form with
             | Error message -> state |> withFormError message
             | Ok game ->
-                let newGameList = applyForm state.gameList state.form game
+                let newGameList = applyForm state.gameList game
 
                 try
-                    saveFile newGameList
+                    saveFile gameDataPath newGameList
                     // Formular schließen und das gespeicherte Spiel gleich anzeigen
                     { state with
                         gameList = newGameList

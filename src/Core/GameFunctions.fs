@@ -27,10 +27,15 @@ module GameFunctions =
     let validateGameForm (existingGames: Game list) (form: GameForm) : Result<Game, string> =
         let name = form.nameInput.Trim()
 
+        // Beim Bearbeiten behält das Spiel seine id, ein neues Spiel bekommt eine neue
+        let id =
+            match form.editing with
+            | Some original -> original.id
+            | None -> Guid.NewGuid()
+
         // Beim Bearbeiten darf das Spiel seinen eigenen Namen behalten,
         // deshalb lassen wir es beim Suchen nach doppelten Namen weg.
-        let otherGames =
-            existingGames |> List.filter (fun game -> Some game <> form.editing)
+        let otherGames = existingGames |> List.filter (fun game -> game.id <> id)
 
         let alreadyExists =
             otherGames
@@ -41,10 +46,43 @@ module GameFunctions =
         | _ when alreadyExists -> Error $"Das Spiel \"{name}\" gibt es schon."
         | false, _ -> Error "Die Spieleranzahl muss eine Zahl sein."
         | true, number when number < 1 -> Error "Die Spieleranzahl muss mindestens 1 sein."
-        | true, number -> Ok { name = name; playerNumbers = number }
+        | true, number ->
+            Ok {
+                id = id
+                name = name
+                playerNumbers = number
+            }
 
-    // Neues Spiel hinten anhängen oder das bearbeitete Spiel an seiner Stelle ersetzen
-    let applyForm (existingGames: Game list) (form: GameForm) (game: Game) =
-        match form.editing with
-        | None -> List.append existingGames [ game ]
-        | Some original -> existingGames |> List.map (fun g -> if g = original then game else g)
+    // Prüft die ids einer geladenen Spieleliste:
+    // keine leere id (lauter Nullen) und keine id doppelt.
+    // Ergebnis ist Ok mit der unveränderten Liste oder Error mit einer Fehlermeldung.
+    let validateGameIds (games: Game list) : Result<Game list, string> =
+        let emptyIdGames =
+            games |> List.filter (fun game -> game.id = Guid.Empty)
+
+        let duplicateIds =
+            games
+            |> List.groupBy (fun game -> game.id)
+            |> List.filter (fun (_, gamesWithId) -> gamesWithId.Length > 1)
+
+        let names (gameList: Game list) =
+            gameList |> List.map (fun game -> $"\"{game.name}\"") |> String.concat ", "
+
+        if not emptyIdGames.IsEmpty then
+            Error $"Diese Spiele haben eine leere ID: {names emptyIdGames}"
+        elif not duplicateIds.IsEmpty then
+            let details =
+                duplicateIds
+                |> List.map (fun (id, gamesWithId) -> $"{names gamesWithId} (ID {id})")
+                |> String.concat "; "
+
+            Error $"Diese Spiele haben die gleiche ID: {details}"
+        else
+            Ok games
+
+    // Neues Spiel hinten anhängen oder das bearbeitete Spiel (gleiche id) an seiner Stelle ersetzen
+    let applyForm (existingGames: Game list) (game: Game) =
+        if existingGames |> List.exists (fun g -> g.id = game.id) then
+            existingGames |> List.map (fun g -> if g.id = game.id then game else g)
+        else
+            List.append existingGames [ game ]

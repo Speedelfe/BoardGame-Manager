@@ -32,6 +32,8 @@ module Types =
 
     type Game =
         {
+            // Feste, eindeutige Kennung. Ändert sich nie, auch nicht beim Umbenennen.
+            id: Guid
             name: string
             playerNumbers: int
         //   playTime: float

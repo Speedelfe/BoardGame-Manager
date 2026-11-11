@@ -9,7 +9,8 @@ open Types
 module Functions =
     let gameDataPath = "./data/games.json"
 
-    // Einstellungen, damit System.Text.Json F#-Typen (Records, Listen, Option) versteht
+    // Einstellungen, damit System.Text.Json F#-Typen (Records, Listen, Option) versteht.
+    // Fehlt in der Datei ein Feld (z.B. die id), ist das ein Fehler beim Laden.
     let private jsonOptions =
         let options = JsonSerializerOptions(WriteIndented = true)
         options.Converters.Add(JsonFSharpConverter())
@@ -27,6 +28,13 @@ module Functions =
             description = json.description
         }
 
+    // Liste von Games in json speichern
+    let saveFile dataPath (gameList: Game list) =
+        let json = JsonSerializer.Serialize({ gameList = gameList }, jsonOptions)
+        // Ordner "data" anlegen, falls es ihn noch nicht gibt
+        Directory.CreateDirectory(Path.GetDirectoryName(Path.GetFullPath dataPath)) |> ignore
+        File.WriteAllText(dataPath, json)
+
     // Game Liste aus Json lesen (gleiches Format, das saveFile schreibt).
     // Ergebnis ist Ok mit der Liste oder Error mit einer Fehlermeldung.
     // Gibt es die Datei noch nicht, ist das kein Fehler, sondern eine leere Liste.
@@ -34,16 +42,17 @@ module Functions =
         if not (File.Exists dataPath) then
             Ok []
         else
-            try
-                let text = File.ReadAllText dataPath
-                let saved = JsonSerializer.Deserialize<GameSaveStrukture>(text, jsonOptions)
-                Ok saved.gameList
-            with ex ->
-                Error $"Die Spieleliste ({Path.GetFullPath dataPath}) konnte nicht gelesen werden: {ex.Message}"
+            let problem message =
+                $"Die Spieleliste ({Path.GetFullPath dataPath}) konnte nicht gelesen werden: {message}"
 
-    // Liste von Games in json speichern
-    let saveFile (gameList: Game list) =
-        let json = JsonSerializer.Serialize({ gameList = gameList }, jsonOptions)
-        // Ordner "data" anlegen, falls es ihn noch nicht gibt
-        Directory.CreateDirectory(Path.GetDirectoryName gameDataPath) |> ignore
-        File.WriteAllText(gameDataPath, json)
+            let read =
+                try
+                    let text = File.ReadAllText dataPath
+                    Ok(JsonSerializer.Deserialize<GameSaveStrukture>(text, jsonOptions).gameList)
+                with ex ->
+                    Error ex.Message
+
+            // Erst lesen, dann die ids prüfen. Bei einem Fehler wird nicht weitergeprüft.
+            read
+            |> Result.bind GameFunctions.validateGameIds
+            |> Result.mapError problem
