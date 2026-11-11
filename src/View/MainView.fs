@@ -27,7 +27,12 @@ module MainView =
             form = emptyForm ()
             loadError = loadError
             deleteState = NotAsked
+            pendingMsg = None
         }
+
+    // Formular ist offen und enthält Eingaben, die noch nicht gespeichert sind
+    let private hasUnsavedInput state =
+        state.formView && formHasChanges state.form
 
     // Fehlermeldung im Formular setzen
     let private withFormError message state = {
@@ -35,23 +40,49 @@ module MainView =
             form = { state.form with error = Some message }
     }
 
-    let update msg state =
+    let rec update msg state =
         match msg with
+        // Nach einem Ladefehler kann nichts gespeichert werden, also auch kein Formular öffnen
+        | ShowNewGame when state.loadError.IsSome -> state
+        // Klick auf das Spiel, das gerade bearbeitet wird: dort sind wir schon.
+        // Das Formular bleibt offen, eine offene Nachfrage ist damit erledigt.
+        // (Kommt auch, wenn die Liste nach "Nein" ihre Markierung zurücksetzt.)
+        | ShowDetail game when
+            state.formView
+            && state.form.editing |> Option.exists (fun edited -> edited.id = game.id)
+              ->
+              { state with pendingMsg = None }
+        // Das Formular hat ungespeicherte Eingaben: nicht einfach schließen,
+        // sondern die Nachricht merken und erst nachfragen.
+        | ShowDetail _
+        | ShowNewGame when hasUnsavedInput state -> { state with pendingMsg = Some msg }
         | ShowDetail game -> {
             state with
                 choosenGame = Some game
                 formView = false
                 deleteState = NotAsked
+                pendingMsg = None
           }
-        // Nach einem Ladefehler kann nichts gespeichert werden, also auch kein Formular öffnen
-        | ShowNewGame when state.loadError.IsSome -> state
         | ShowNewGame -> {
             state with
                 choosenGame = None
                 formView = true
                 form = emptyForm ()
                 deleteState = NotAsked
+                pendingMsg = None
           }
+        // "Ja, verwerfen": Formular schließen und die gemerkte Nachricht jetzt ausführen
+        | ConfirmDiscard ->
+            match state.pendingMsg with
+            | None -> state
+            | Some pending ->
+                update pending {
+                    state with
+                        formView = false
+                        pendingMsg = None
+                }
+        // "Nein": Formular bleibt offen, wie es ist
+        | CancelDiscard -> { state with pendingMsg = None }
         // Das gerade ausgewählte Spiel ins Formular laden.
         // Es bleibt in der Liste markiert, damit man sieht, was man bearbeitet.
         | EditChoosenGame ->
@@ -86,6 +117,7 @@ module MainView =
                 choosenGame = state.form.editing
                 formView = false
                 form = emptyForm ()
+                pendingMsg = None
           }
         | SaveForm when state.loadError.IsSome ->
             state
@@ -105,6 +137,7 @@ module MainView =
                             choosenGame = Some game
                             formView = false
                             form = emptyForm ()
+                            pendingMsg = None
                     }
                 with ex ->
                     state |> withFormError $"Speichern hat nicht geklappt: {ex.Message}"
@@ -135,7 +168,8 @@ module MainView =
         TextBlock.create [ TextBlock.text game.name ]
 
     // Formular zum Anlegen oder Bearbeiten eines Spiels, rechts
-    let formView (form: GameForm) dispatch : IView =
+    // askDiscard = true: statt Speichern/Abbrechen wird "Änderungen verwerfen?" gefragt
+    let formView (form: GameForm) (askDiscard: bool) dispatch : IView =
         StackPanel.create [
             StackPanel.dock Dock.Right
             StackPanel.width 300.
@@ -172,14 +206,35 @@ module MainView =
                         TextBlock.foreground Brushes.OrangeRed
                         TextBlock.textWrapping TextWrapping.Wrap
                     ]
-                StackPanel.create [
-                    StackPanel.orientation Orientation.Horizontal
-                    StackPanel.spacing 10.
-                    StackPanel.children [
-                        Button.create [ Button.content "Speichern"; Button.onClick (fun _ -> dispatch SaveForm) ]
-                        Button.create [ Button.content "Abbrechen"; Button.onClick (fun _ -> dispatch CancelForm) ]
+                if askDiscard then
+                    TextBlock.create [
+                        TextBlock.text "Du hast ungespeicherte Eingaben. Änderungen verwerfen?"
+                        TextBlock.textWrapping TextWrapping.Wrap
                     ]
-                ]
+
+                    StackPanel.create [
+                        StackPanel.orientation Orientation.Horizontal
+                        StackPanel.spacing 10.
+                        StackPanel.children [
+                            Button.create [
+                                Button.content "Ja, verwerfen"
+                                Button.onClick (fun _ -> dispatch ConfirmDiscard)
+                            ]
+                            Button.create [
+                                Button.content "Nein, weiter bearbeiten"
+                                Button.onClick (fun _ -> dispatch CancelDiscard)
+                            ]
+                        ]
+                    ]
+                else
+                    StackPanel.create [
+                        StackPanel.orientation Orientation.Horizontal
+                        StackPanel.spacing 10.
+                        StackPanel.children [
+                            Button.create [ Button.content "Speichern"; Button.onClick (fun _ -> dispatch SaveForm) ]
+                            Button.create [ Button.content "Abbrechen"; Button.onClick (fun _ -> dispatch CancelForm) ]
+                        ]
+                    ]
             ]
         ]
 
@@ -300,10 +355,13 @@ module MainView =
                     ListBox.itemTemplate (DataTemplateView<Game>.create gameItemView)
                     // Auswahl in der Liste passend zum ausgewählten Spiel halten.
                     // Ohne Auswahl (null) kann man danach jedes Spiel wieder anklicken.
+                    // Läuft gerade die Nachfrage "Änderungen verwerfen?" für ein angeklicktes Spiel,
+                    // bleibt dieses markiert. Bei "Nein" springt die Markierung zurück.
                     ListBox.selectedItem (
-                        match state.choosenGame with
-                        | Some game -> box game
-                        | None -> null
+                        match state.pendingMsg, state.choosenGame with
+                        | Some(ShowDetail game), _ -> box game
+                        | _, Some game -> box game
+                        | _, None -> null
                     )
                     // Achtung: FuncUI richtet diese Funktion nur einmal ein. Sie darf deshalb
                     // nichts aus "state" benutzen (das wäre für immer der Stand vom Programmstart).
@@ -316,7 +374,7 @@ module MainView =
                 ]
                 // Rechts entweder das Formular oder die Details des ausgewählten Spiels
                 if state.formView then
-                    formView state.form dispatch
+                    formView state.form state.pendingMsg.IsSome dispatch
                 else
                     match state.choosenGame with
                     | None -> ()

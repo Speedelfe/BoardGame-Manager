@@ -117,3 +117,33 @@ let ``Bearbeitetes Spiel darf nicht den Namen eines anderen Spiels bekommen`` ()
 let ``Beim Bearbeiten gelten die gleichen Prüfregeln wie beim Anlegen`` () =
     let message = validateGameForm games (editForm dixit "Dixit" "null") |> expectError
     Assert.Equal("Die Spieleranzahl muss eine Zahl sein.", message)
+
+// ----- Ungespeicherte Eingaben erkennen (formHasChanges) -----
+
+[<Fact>]
+let ``Frisch geöffnetes Formular hat keine Änderungen`` () =
+    Assert.False(formHasChanges (emptyForm ()))
+    Assert.False(formHasChanges (formFromGame dixit))
+
+[<Fact>]
+let ``Eingaben im neuen Formular zählen als Änderung`` () =
+    Assert.True(formHasChanges (newForm "Monopoly" ""))
+    Assert.True(formHasChanges (newForm "" "4"))
+
+[<Fact>]
+let ``Geänderte Eingaben beim Bearbeiten zählen als Änderung`` () =
+    Assert.True(formHasChanges (editForm dixit "Dixit Odyssey" "3"))
+    Assert.True(formHasChanges (editForm dixit "Dixit" "6"))
+
+[<Fact>]
+let ``Zurückgetippte Eingaben zählen nicht als Änderung`` () =
+    Assert.False(formHasChanges (editForm dixit "Dixit" "3"))
+
+[<Fact>]
+let ``Eine Fehlermeldung allein zählt nicht als Änderung`` () =
+    Assert.False(
+        formHasChanges
+            { emptyForm () with
+                error = Some "Fehler"
+            }
+    )

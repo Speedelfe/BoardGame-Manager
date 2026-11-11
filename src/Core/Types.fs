@@ -55,6 +55,21 @@ module Types =
         | Confirming // "Wirklich löschen?" wird angezeigt
         | DeleteFailed of string // Löschen hat nicht geklappt, mit Fehlermeldung
 
+    type Msg =
+        | ShowDetail of Game
+        | ShowNewGame
+        | EditChoosenGame
+        | FormNameChanged of string
+        | FormPlayerNumbersChanged of string
+        | SaveForm
+        | CancelForm
+        // Antwort auf die Frage "Änderungen verwerfen?"
+        | ConfirmDiscard
+        | CancelDiscard
+        | AskDeleteChoosenGame
+        | ConfirmDelete
+        | CancelDelete
+
     type State =
         {
             gameList: Game list
@@ -65,16 +80,7 @@ module Types =
             // damit die (vielleicht nur kaputte) Datei nicht überschrieben wird.
             loadError: string option
             deleteState: DeleteState
+            // Wartet auf die Antwort zu "Änderungen verwerfen?":
+            // die Nachricht, die das offene Formular mit ungespeicherten Eingaben schließen würde.
+            pendingMsg: Msg option
         }
-
-    type Msg =
-        | ShowDetail of Game
-        | ShowNewGame
-        | EditChoosenGame
-        | FormNameChanged of string
-        | FormPlayerNumbersChanged of string
-        | SaveForm
-        | CancelForm
-        | AskDeleteChoosenGame
-        | ConfirmDelete
-        | CancelDelete

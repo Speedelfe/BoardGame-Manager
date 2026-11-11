@@ -23,6 +23,17 @@ module GameFunctions =
             editing = Some game
         }
 
+    // Wurde im Formular etwas eingetippt, das noch nicht gespeichert ist?
+    // Verglichen wird mit dem Stand, mit dem das Formular geöffnet wurde.
+    let formHasChanges (form: GameForm) =
+        let original =
+            match form.editing with
+            | None -> emptyForm ()
+            | Some game -> formFromGame game
+
+        form.nameInput <> original.nameInput
+        || form.playerNumbersInput <> original.playerNumbersInput
+
     // Prüft die Eingaben aus dem Formular.
     // Ergebnis ist entweder Ok mit dem fertigen Spiel oder Error mit einer Fehlermeldung.
     let validateGameForm (existingGames: Game list) (form: GameForm) : Result<Game, string> =
