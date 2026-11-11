@@ -43,6 +43,8 @@ module MainView =
                 formView = false
                 deleteState = NotAsked
           }
+        // Nach einem Ladefehler kann nichts gespeichert werden, also auch kein Formular öffnen
+        | ShowNewGame when state.loadError.IsSome -> state
         | ShowNewGame -> {
             state with
                 choosenGame = None
@@ -264,6 +266,8 @@ module MainView =
                             StackPanel.children [
                                 Button.create [
                                     Button.content "Neues Spiel"
+                                    // Nach einem Ladefehler ausgegraut, weil Speichern dann gesperrt ist
+                                    Button.isEnabled state.loadError.IsNone
                                     Button.onClick (fun _ -> dispatch ShowNewGame)
                                 ]
                             ]
@@ -277,7 +281,12 @@ module MainView =
                     TextBlock.create [
                         TextBlock.dock Dock.Top
                         TextBlock.margin 10.
-                        TextBlock.text message
+                        TextBlock.text (
+                            message
+                            + "\n\nSolange das so ist, können keine Spiele angelegt oder geändert werden, "
+                            + "damit die Datei nicht überschrieben wird. "
+                            + "Bitte die Datei reparieren oder wegschieben und die App neu starten."
+                        )
                         TextBlock.foreground Brushes.OrangeRed
                         TextBlock.textWrapping TextWrapping.Wrap
                     ]
