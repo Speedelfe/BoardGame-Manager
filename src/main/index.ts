@@ -25,8 +25,9 @@ registerGameStorageHandlers(ipcMain, new JsonFileGameRepository(join(dataFolder,
 function createWindow(): void {
   const window = new BrowserWindow({
     title: 'Boardgame Manager',
-    width: 900,
-    height: 500,
+    // So groß, dass Formular und Details eines Spiels ohne Rollbalken hineinpassen
+    width: 1000,
+    height: 760,
     backgroundColor: '#1e1e1e',
     autoHideMenuBar: true,
     webPreferences: {
