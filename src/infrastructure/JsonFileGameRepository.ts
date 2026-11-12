@@ -1,11 +1,11 @@
-import { copyFile, mkdir, readFile, rename, writeFile } from 'node:fs/promises'
 import { existsSync } from 'node:fs'
-import { dirname, resolve } from 'node:path'
+import { resolve } from 'node:path'
 
 import type { GameData } from '../domain/Game'
 import { GameCollection } from '../domain/GameCollection'
 import type { GameRepository } from '../domain/GameRepository'
 import { errorMessage, fail, ok, type Result } from '../domain/Result'
+import { isObject, readJson, writeListToJsonFile } from './jsonFile'
 
 // So steht ein Spiel in der Datei. Das Format ist dasselbe wie in der alten F#-App,
 // deshalb heißt die Spieleranzahl hier weiter "playerNumbers".
@@ -23,7 +23,9 @@ interface StoredGame {
   description: string | null
 }
 
-// Speichert die Sammlung als JSON-Datei. Läuft nur im Hintergrundteil von Electron (Node).
+// Speichert die Sammlung als Liste "gameList" in einer JSON-Datei.
+// In derselben Datei liegen auch die Regale (siehe JsonFileShelfRepository).
+// Läuft nur im Hintergrundteil von Electron (Node).
 export class JsonFileGameRepository implements GameRepository {
   constructor(private readonly dataPath: string) {}
 
@@ -36,8 +38,7 @@ export class JsonFileGameRepository implements GameRepository {
     // Erst lesen, dann IDs und Inhalt prüfen. Bei einem Fehler wird nicht weitergeprüft.
     let result: Result<GameCollection>
     try {
-      const text = await readFile(this.dataPath, 'utf8')
-      const data = readGameList(JSON.parse(text))
+      const data = readGameList(await readJson(this.dataPath))
       result = data.ok ? GameCollection.restore(data.value) : data
     } catch (error) {
       result = fail(errorMessage(error))
@@ -49,9 +50,8 @@ export class JsonFileGameRepository implements GameRepository {
     )
   }
 
-  // Geschrieben wird erst in eine Hilfsdatei (.tmp), die dann die echte Datei ersetzt.
-  // So bleibt die alte Liste heil, falls beim Schreiben etwas schiefgeht.
-  // Der Stand vor dem Speichern bleibt als Sicherungskopie (.bak) liegen.
+  // Ersetzt nur die Spiele in der Datei, die Regale bleiben, wie sie sind.
+  // Wie sicher geschrieben wird (Hilfsdatei, Sicherungskopie), steht in jsonFile.ts.
   async save(collection: GameCollection): Promise<void> {
     const gameList: StoredGame[] = collection.toData().map((game) => ({
       id: game.id,
@@ -65,29 +65,23 @@ export class JsonFileGameRepository implements GameRepository {
       secondaryGenres: game.secondaryGenres,
       description: game.description,
     }))
-    const json = JSON.stringify({ gameList }, null, 2)
-
-    // Ordner anlegen, falls es ihn noch nicht gibt
-    await mkdir(dirname(resolve(this.dataPath)), { recursive: true })
-
-    const tempPath = this.dataPath + '.tmp'
-    await writeFile(tempPath, json, 'utf8')
-
-    if (existsSync(this.dataPath)) {
-      await copyFile(this.dataPath, this.dataPath + '.bak')
-    }
-    await rename(tempPath, this.dataPath)
+    await writeListToJsonFile(this.dataPath, 'gameList', gameList)
   }
 }
 
 // Prüft, ob der Inhalt der Datei die erwartete Form hat, und übersetzt ihn in einfache Spieldaten.
 function readGameList(content: unknown): Result<GameData[]> {
-  if (!isObject(content) || !Array.isArray(content['gameList'])) {
+  if (!isObject(content)) {
     return fail('Das Feld "gameList" mit der Liste der Spiele fehlt.')
+  }
+  // Eine Datei, in der bisher nur Regale stehen, hat noch keine Spiele
+  const gameList = content['gameList'] ?? []
+  if (!Array.isArray(gameList)) {
+    return fail('Das Feld "gameList" ist keine Liste.')
   }
 
   const games: GameData[] = []
-  for (const [index, entry] of content['gameList'].entries()) {
+  for (const [index, entry] of gameList.entries()) {
     const position = `Spiel Nr. ${index + 1}`
 
     if (!isObject(entry)) {
@@ -148,8 +142,4 @@ function isTextOrMissing(value: unknown): value is string | null | undefined {
 
 function isTextList(value: unknown): value is string[] {
   return Array.isArray(value) && value.every((entry) => typeof entry === 'string')
-}
-
-function isObject(value: unknown): value is Record<string, unknown> {
-  return typeof value === 'object' && value !== null && !Array.isArray(value)
 }
