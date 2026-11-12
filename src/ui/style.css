@@ -176,6 +176,16 @@ textarea {
   overflow-wrap: anywhere;
 }
 
+/* Die Spiele eines Regals, in der Ansicht "Regale" */
+.shelf-games {
+  max-width: 300px;
+  margin: 5px 0 0;
+  padding: 0;
+  list-style: none;
+  background: var(--surface);
+  border-radius: 4px;
+}
+
 .game-form {
   display: flex;
   flex-direction: column;

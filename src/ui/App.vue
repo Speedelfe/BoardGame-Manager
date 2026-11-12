@@ -29,6 +29,12 @@ const markedGame = computed(() => {
 const shelves = computed(() => state.value.shelves.sortedByName())
 const shelfView = computed(() => state.value.shelfView)
 
+// Die Spiele, die im ausgewählten Regal stehen, alphabetisch sortiert
+const chosenShelfGames = computed(() => {
+  const shelf = shelfView.value.chosenShelf
+  return shelf === null ? [] : state.value.collection.gamesOnShelf(shelf.id)
+})
+
 // Der Name des Regals, in dem das ausgewählte Spiel steht (null = kein Regal).
 // Er wird hier nachgeschlagen, weil das Spiel selbst nur die ID des Regals kennt.
 const chosenGameShelfName = computed(() => {
@@ -133,7 +139,9 @@ const chosenGameShelfName = computed(() => {
     <ShelfDetail
       v-else-if="shelfView.chosenShelf !== null"
       :shelf="shelfView.chosenShelf"
+      :games="chosenShelfGames"
       :delete-state="shelfView.deleteState"
+      @choose-game="manager.showGameFromShelf($event)"
       @rename="manager.renameChosenShelf()"
       @ask-delete="manager.askDeleteChosenShelf()"
       @confirm-delete="manager.confirmDeleteShelf()"

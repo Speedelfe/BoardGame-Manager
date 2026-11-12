@@ -187,6 +187,12 @@ export function createGameManager(repositories: Repositories, startState: State 
     change({ view: 'games', shelfView: { ...initialShelfView(), chosenShelf } })
   }
 
+  // Klick auf ein Spiel in der Ansicht "Regale": zu den Spielen wechseln und dieses Spiel anzeigen
+  function showGameFromShelf(game: Game): void {
+    showGames()
+    showDetail(game)
+  }
+
   // "Nein": Formular bleibt offen, wie es ist
   function cancelDiscard(): void {
     change({ pending: null })
@@ -358,6 +364,7 @@ export function createGameManager(repositories: Repositories, startState: State 
     confirmDelete,
     showShelves,
     showGames,
+    showGameFromShelf,
     // Alles, was man in der Ansicht "Regale" tun kann
     ...createShelfActions(state, shelfRepository),
   }

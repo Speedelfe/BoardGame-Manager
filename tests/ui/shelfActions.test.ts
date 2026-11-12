@@ -10,6 +10,7 @@ import { emptyShelfForm } from '../../src/ui/shelfActions'
 import {
   bueroShelf,
   dixit,
+  fluegelschlag,
   games,
   MemoryGameRepository,
   MemoryShelfRepository,
@@ -85,6 +86,20 @@ describe('Zwischen Spielen und Regalen wechseln', () => {
     manager.cancelDiscard()
     expect(manager.state.value.view).toBe('games')
     expect(manager.state.value.form.nameInput).toBe('Monopoly')
+  })
+
+  test('Klick auf ein Spiel im Regal springt zu den Details dieses Spiels', () => {
+    const manager = managerWith()
+    manager.showDetail(dixit)
+    manager.showShelves()
+    manager.showShelfDetail(sofaShelf)
+    manager.showGameFromShelf(fluegelschlag)
+
+    expect(manager.state.value.view).toBe('games')
+    expect(manager.state.value.chosenGame).toBe(fluegelschlag)
+    expect(manager.state.value.formOpen).toBe(false)
+    // Das Regal bleibt ausgewählt, falls man wieder zurück wechselt
+    expect(manager.state.value.shelfView.chosenShelf).toBe(sofaShelf)
   })
 
   test('Zurück zu den Spielen schließt ein offenes Regal-Formular, das Regal bleibt ausgewählt', () => {
