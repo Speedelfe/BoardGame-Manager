@@ -242,6 +242,11 @@ export function createGameManager(repositories: Repositories, startState: State 
     changeForm(withSecondaryGenreToggled(state.value.form, genre))
   }
 
+  // Regal auswählen. Der Text ist die ID des Regals, leer = kein Regal.
+  function changeShelf(shelfId: string): void {
+    changeForm({ ...state.value.form, shelfIdInput: shelfId })
+  }
+
   function changeDescription(text: string): void {
     changeForm({ ...state.value.form, descriptionInput: text })
   }
@@ -344,6 +349,7 @@ export function createGameManager(repositories: Repositories, startState: State 
     changeLastPlayed,
     changeGenre,
     toggleSecondaryGenre,
+    changeShelf,
     changeDescription,
     cancelForm,
     saveForm,

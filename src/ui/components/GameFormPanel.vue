@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { genreNames, genres, type Genre } from '../../domain/GameGenres'
 import { todayIsoDate } from '../../domain/LastPlayed'
+import type { Shelf } from '../../domain/Shelf'
 import {
   canEditPlayTimeMax,
   canTogglePlayTimeOpenEnded,
@@ -9,8 +10,10 @@ import {
 } from '../gameForm'
 
 // askDiscard = true: statt Speichern/Abbrechen wird "Änderungen verwerfen?" gefragt
+// shelves: die Regale für die Auswahlliste, schon in der Reihenfolge der Anzeige
 defineProps<{
   form: GameForm
+  shelves: Shelf[]
   askDiscard: boolean
 }>()
 
@@ -23,6 +26,7 @@ const emit = defineEmits<{
   changeLastPlayed: [text: string]
   changeGenre: [text: string]
   toggleSecondaryGenre: [genre: Genre]
+  changeShelf: [shelfId: string]
   changeDescription: [text: string]
   save: []
   cancel: []
@@ -124,6 +128,15 @@ function isChecked(event: Event): boolean {
         {{ genreNames[genre] }}
       </label>
     </fieldset>
+
+    <!-- Die Regale selbst pflegt man in der Ansicht "Regale" -->
+    <label for="shelf">Regal (freiwillig)</label>
+    <select id="shelf" :value="form.shelfIdInput" @change="emit('changeShelf', textOf($event))">
+      <option value="">kein Regal</option>
+      <option v-for="shelf in shelves" :key="shelf.id.value" :value="shelf.id.value">
+        {{ shelf.name.text }}
+      </option>
+    </select>
 
     <label for="last-played">Zuletzt gespielt (freiwillig)</label>
     <input

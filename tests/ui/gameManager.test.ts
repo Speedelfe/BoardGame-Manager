@@ -19,6 +19,7 @@ import {
 } from '../../src/ui/gameManager'
 import {
   azul,
+  bueroShelf,
   dixit,
   expectOk,
   games,
@@ -209,6 +210,7 @@ describe('Speichern', () => {
       manager.changePlayTimeMax('180')
       manager.changeGenre('dice')
       manager.toggleSecondaryGenre('party')
+      manager.changeShelf(bueroShelf.id.value)
       manager.changeLastPlayed('2025-12-24')
       manager.changeDescription('Dauert ewig.')
       await manager.saveForm()
@@ -218,6 +220,7 @@ describe('Speichern', () => {
       expect(state.chosenGame?.details.playTime?.text).toBe('60–180 Minuten')
       expect(state.chosenGame?.details.genres.main).toBe('dice')
       expect(state.chosenGame?.details.genres.secondary).toEqual(['party'])
+      expect(state.chosenGame?.details.shelfId?.equals(bueroShelf.id)).toBe(true)
       expect(state.chosenGame?.details.lastPlayed?.text).toBe('24.12.2025')
       expect(state.chosenGame?.details.description).toBe('Dauert ewig.')
       expect(await loadFrom(path)).toEqual(state.collection)

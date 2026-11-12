@@ -5,8 +5,10 @@ import type { Game } from '../../domain/Game'
 import { genreNames } from '../../domain/GameGenres'
 import type { DeleteState } from '../gameManager'
 
+// shelfName: der Name des Regals, in dem das Spiel steht. Das Spiel selbst kennt nur die ID des Regals.
 const props = defineProps<{
   game: Game
+  shelfName: string | null
   deleteState: DeleteState
 }>()
 
@@ -21,6 +23,7 @@ const info = computed(() => {
     playTime: playTime?.text ?? empty,
     genre: genres.main === null ? empty : genreNames[genres.main],
     secondaryGenres: genres.secondary.map((genre) => genreNames[genre]).join(', ') || empty,
+    shelf: props.shelfName ?? empty,
     lastPlayed: lastPlayed?.text ?? empty,
     description: description ?? empty,
   }
@@ -44,6 +47,7 @@ defineEmits<{
       <p>Spieldauer: {{ info.playTime }}</p>
       <p>Genre: {{ info.genre }}</p>
       <p>Nebengenres: {{ info.secondaryGenres }}</p>
+      <p>Regal: {{ info.shelf }}</p>
       <p>Zuletzt gespielt: {{ info.lastPlayed }}</p>
       <!-- Zeilenumbrüche der Beschreibung bleiben erhalten (siehe style.css) -->
       <p class="description">Beschreibung: {{ info.description }}</p>

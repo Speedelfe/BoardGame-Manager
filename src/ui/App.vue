@@ -28,6 +28,15 @@ const markedGame = computed(() => {
 // Die Regale, ebenfalls alphabetisch sortiert, und der Stand der Ansicht "Regale"
 const shelves = computed(() => state.value.shelves.sortedByName())
 const shelfView = computed(() => state.value.shelfView)
+
+// Der Name des Regals, in dem das ausgewählte Spiel steht (null = kein Regal).
+// Er wird hier nachgeschlagen, weil das Spiel selbst nur die ID des Regals kennt.
+const chosenGameShelfName = computed(() => {
+  const shelfId = state.value.chosenGame?.details.shelfId ?? null
+  if (shelfId === null) return null
+
+  return state.value.shelves.findById(shelfId)?.name.text ?? null
+})
 </script>
 
 <template>
@@ -75,6 +84,7 @@ const shelfView = computed(() => state.value.shelfView)
     <GameFormPanel
       v-if="state.formOpen"
       :form="state.form"
+      :shelves="shelves"
       :ask-discard="state.pending !== null"
       @change-name="manager.changeName($event)"
       @change-player-count="manager.changePlayerCount($event)"
@@ -84,6 +94,7 @@ const shelfView = computed(() => state.value.shelfView)
       @change-last-played="manager.changeLastPlayed($event)"
       @change-genre="manager.changeGenre($event)"
       @toggle-secondary-genre="manager.toggleSecondaryGenre($event)"
+      @change-shelf="manager.changeShelf($event)"
       @change-description="manager.changeDescription($event)"
       @save="manager.saveForm()"
       @cancel="manager.cancelForm()"
@@ -93,6 +104,7 @@ const shelfView = computed(() => state.value.shelfView)
     <GameDetail
       v-else-if="state.chosenGame !== null"
       :game="state.chosenGame"
+      :shelf-name="chosenGameShelfName"
       :delete-state="state.deleteState"
       @edit="manager.editChosenGame()"
       @ask-delete="manager.askDeleteChosenGame()"
