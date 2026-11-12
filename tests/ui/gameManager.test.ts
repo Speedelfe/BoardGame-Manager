@@ -9,26 +9,45 @@ import { describe, expect, test } from 'vitest'
 import type { GameCollection } from '../../src/domain/GameCollection'
 import type { GameRepository } from '../../src/domain/GameRepository'
 import { JsonFileGameRepository } from '../../src/infrastructure/JsonFileGameRepository'
+import { JsonFileShelfRepository } from '../../src/infrastructure/JsonFileShelfRepository'
 import { emptyForm, formFromGame } from '../../src/ui/gameForm'
-import { createGameManager, initialState, type State } from '../../src/ui/gameManager'
+import {
+  createGameManager,
+  initialState,
+  type Repositories,
+  type State,
+} from '../../src/ui/gameManager'
 import {
   azul,
   dixit,
   expectOk,
   games,
   MemoryGameRepository,
+  MemoryShelfRepository,
   names,
+  shelves,
   withTestFolder,
 } from '../testData'
 
 // Stand der App mit dieser Sammlung, nichts ausgewählt, kein Formular offen
 function stateWith(collection: GameCollection, changes: Partial<State> = {}): State {
-  return { ...initialState(), collection, ...changes }
+  return { ...initialState(), collection, shelves, ...changes }
 }
 
-// Programmablauf mit den drei Beispielspielen
+// Repositorys für den Programmablauf: die Spiele wie angegeben,
+// die beiden Beispielregale nur im Arbeitsspeicher
+function repositoriesWith(gameRepository: GameRepository): Repositories {
+  return { games: gameRepository, shelves: new MemoryShelfRepository(shelves) }
+}
+
+// Repositorys, die Spiele und Regale in derselben Datei speichern, wie in der echten App
+function fileRepositories(path: string): Repositories {
+  return { games: new JsonFileGameRepository(path), shelves: new JsonFileShelfRepository(path) }
+}
+
+// Programmablauf mit den drei Beispielspielen und den zwei Beispielregalen
 function managerWith(repository: GameRepository, changes: Partial<State> = {}) {
-  return createGameManager(repository, stateWith(games, changes))
+  return createGameManager(repositoriesWith(repository), stateWith(games, changes))
 }
 
 // Programmablauf, in dem "Dixit" gerade bearbeitet wird und der Name schon geändert wurde
@@ -48,28 +67,43 @@ async function loadFrom(path: string): Promise<GameCollection> {
 describe('Start', () => {
   test('Start ohne Datei: leere Sammlung und kein Fehler', () =>
     withTestFolder(async (folder) => {
-      const manager = createGameManager(new JsonFileGameRepository(join(folder, 'games.json')))
+      const manager = createGameManager(fileRepositories(join(folder, 'games.json')))
       await manager.load()
       expect(manager.state.value.collection.games).toEqual([])
       expect(manager.state.value.loadError).toBeNull()
       expect(manager.state.value.formOpen).toBe(false)
     }))
 
-  test('Start mit gespeicherter Sammlung lädt die Spiele', () =>
+  test('Start mit gespeicherter Sammlung lädt die Spiele und die Regale', () =>
     withTestFolder(async (folder) => {
-      const repository = new JsonFileGameRepository(join(folder, 'games.json'))
-      await repository.save(games)
-      const manager = createGameManager(repository)
+      const repositories = fileRepositories(join(folder, 'games.json'))
+      await repositories.games.save(games)
+      await repositories.shelves.save(shelves)
+      const manager = createGameManager(repositories)
       await manager.load()
       expect(manager.state.value.collection).toEqual(games)
+      expect(manager.state.value.shelves).toEqual(shelves)
       expect(manager.state.value.loadError).toBeNull()
+    }))
+
+  test('Start mit einem Spiel in einem Regal, das es nicht gibt: Ladefehler', () =>
+    withTestFolder(async (folder) => {
+      // In den Beispielspielen steht Flügelschlag im Sofaschrank, Regale werden aber keine gespeichert
+      const repositories = fileRepositories(join(folder, 'games.json'))
+      await repositories.games.save(games)
+      const manager = createGameManager(repositories)
+      await manager.load()
+      expect(manager.state.value.collection.games).toEqual([])
+      expect(manager.state.value.loadError).toBe(
+        'Das Spiel "Flügelschlag" steht in einem Regal, das es nicht gibt.',
+      )
     }))
 
   test('Start mit kaputter Datei: leere Sammlung und Ladefehler', () =>
     withTestFolder(async (folder) => {
       const path = join(folder, 'games.json')
       await writeFile(path, 'kein json', 'utf8')
-      const manager = createGameManager(new JsonFileGameRepository(path))
+      const manager = createGameManager(fileRepositories(path))
       await manager.load()
       expect(manager.state.value.collection.games).toEqual([])
       expect(manager.state.value.loadError).not.toBeNull()
@@ -237,7 +271,7 @@ describe('Speichern', () => {
       await writeFile(path, 'kein json', 'utf8')
 
       // Das Formular kann man in diesem Zustand gar nicht öffnen, wir erzwingen es hier
-      const manager = createGameManager(new JsonFileGameRepository(path), {
+      const manager = createGameManager(fileRepositories(path), {
         ...initialState(),
         loadError: 'kaputt',
         formOpen: true,

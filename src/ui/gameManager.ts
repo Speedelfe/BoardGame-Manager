@@ -1,5 +1,6 @@
 import { shallowRef, type ShallowRef } from 'vue'
 
+import { loadLibrary } from '../application/loadLibrary'
 import { removeGame } from '../application/removeGame'
 import { saveGame } from '../application/saveGame'
 import type { Game } from '../domain/Game'
@@ -7,6 +8,7 @@ import { GameCollection } from '../domain/GameCollection'
 import type { Genre } from '../domain/GameGenres'
 import type { GameRepository } from '../domain/GameRepository'
 import { ShelfCollection } from '../domain/ShelfCollection'
+import type { ShelfRepository } from '../domain/ShelfRepository'
 import {
   emptyForm,
   formFromGame,
@@ -56,12 +58,19 @@ export function initialState(): State {
   }
 }
 
-export type GameManager = ReturnType<typeof createGameManager>
+// Wo Spiele und Regale geladen und gespeichert werden
+export interface Repositories {
+  games: GameRepository
+  shelves: ShelfRepository
+}
+
+export type GameManager =ReturnType<typeof createGameManager>
 
 // Der Programmablauf: Jede Funktion steht für etwas, das man in der Oberfläche tun kann,
 // und macht aus dem alten Stand einen neuen. Der Stand wird nie verändert, sondern immer ersetzt.
 // Die Vue-Komponenten zeigen nur den Stand an und rufen diese Funktionen auf.
-export function createGameManager(repository: GameRepository, startState: State = initialState()) {
+export function createGameManager(repositories: Repositories, startState: State = initialState()) {
+  const { games: repository, shelves: shelfRepository } = repositories
   const state: ShallowRef<State> = shallowRef(startState)
 
   // Ein paar Felder des Stands ersetzen, der Rest bleibt
@@ -78,14 +87,18 @@ export function createGameManager(repository: GameRepository, startState: State 
     change({ form: { ...state.value.form, error: message } })
   }
 
-  // Beim Start die gespeicherte Sammlung laden
+  // Beim Start die gespeicherten Spiele und Regale laden
   async function load(): Promise<void> {
-    const loaded = await repository.load()
+    const loaded = await loadLibrary(repository, shelfRepository)
 
     if (loaded.ok) {
-      change({ collection: loaded.value, loadError: null })
+      change({ collection: loaded.value.games, shelves: loaded.value.shelves, loadError: null })
     } else {
-      change({ collection: GameCollection.empty(), loadError: loaded.error })
+      change({
+        collection: GameCollection.empty(),
+        shelves: ShelfCollection.empty(),
+        loadError: loaded.error,
+      })
     }
   }
 
