@@ -2,7 +2,9 @@ import { app, BrowserWindow, ipcMain } from 'electron'
 import { join, resolve } from 'node:path'
 
 import { registerGameStorageHandlers } from '../infrastructure/ipc/registerGameStorageHandlers'
+import { registerShelfStorageHandlers } from '../infrastructure/ipc/registerShelfStorageHandlers'
 import { JsonFileGameRepository } from '../infrastructure/JsonFileGameRepository'
+import { JsonFileShelfRepository } from '../infrastructure/JsonFileShelfRepository'
 
 // Der Hintergrundteil von Electron: öffnet das Fenster und kümmert sich um die Datei.
 
@@ -20,7 +22,10 @@ const dataFolder = process.env['BOARDGAME_MANAGER_DATA']
 // damit sie nicht zwischen der Spieleliste herumliegen.
 app.setPath('userData', join(dataFolder, 'electron'))
 
-registerGameStorageHandlers(ipcMain, new JsonFileGameRepository(join(dataFolder, 'games.json')))
+// Spiele und Regale liegen zusammen in derselben Datei
+const dataPath = join(dataFolder, 'games.json')
+registerGameStorageHandlers(ipcMain, new JsonFileGameRepository(dataPath))
+registerShelfStorageHandlers(ipcMain, new JsonFileShelfRepository(dataPath))
 
 function createWindow(): void {
   const window = new BrowserWindow({
