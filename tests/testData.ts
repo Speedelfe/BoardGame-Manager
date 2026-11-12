@@ -7,23 +7,45 @@ import { GameCollection } from '../src/domain/GameCollection'
 import type { GameRepository } from '../src/domain/GameRepository'
 import { ok, type Result } from '../src/domain/Result'
 
-// Feste IDs, damit man sie in Tests und Fehlermeldungen wiedererkennt
+// Die freiwilligen Angaben eines Spiels, alle nicht ausgefüllt
+export const noDetailsData = {
+  playTimeMin: null,
+  playTimeMax: null,
+  playTimeOpenEnded: false,
+  lastPlayed: null,
+  genre: null,
+  secondaryGenres: [],
+  description: null,
+}
+
+// Feste IDs, damit man sie in Tests und Fehlermeldungen wiedererkennt.
+// Dixit hat keine freiwilligen Angaben, Azul nur eine einzelne Spieldauer, Flügelschlag alle.
 export const dixitData: GameData = {
+  ...noDetailsData,
   id: '11111111-1111-1111-1111-111111111111',
   name: 'Dixit',
   playerCount: 3,
 }
 
 export const azulData: GameData = {
+  ...noDetailsData,
   id: '22222222-2222-2222-2222-222222222222',
   name: 'Azul',
   playerCount: 4,
+  playTimeMin: 45,
 }
 
 export const fluegelschlagData: GameData = {
   id: '33333333-3333-3333-3333-333333333333',
   name: 'Flügelschlag',
   playerCount: 5,
+  playTimeMin: 40,
+  playTimeMax: 70,
+  playTimeOpenEnded: false,
+  lastPlayed: '2026-10-03',
+  genre: 'engineBuilder',
+  secondaryGenres: ['strategy', 'card'],
+  description: 'Vögel sammeln.\nSchön ruhig.',
 }
 
 export const gamesData: GameData[] = [dixitData, azulData, fluegelschlagData]

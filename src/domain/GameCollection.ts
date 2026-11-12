@@ -1,7 +1,10 @@
-import { Game, type GameData } from './Game'
+import { cleanDescription, Game, noDetails, type GameData, type GameDetails } from './Game'
+import { GameGenres } from './GameGenres'
 import { GameId } from './GameId'
 import { GameName } from './GameName'
+import { LastPlayed } from './LastPlayed'
 import { PlayerCount } from './PlayerCount'
+import { PlayTime } from './PlayTime'
 import { fail, ok, type Result } from './Result'
 
 // Deutsche Sortierregeln, unabhängig von der Spracheinstellung des Rechners:
@@ -41,8 +44,10 @@ export class GameCollection {
       if (!name.ok) return name
       const playerCount = PlayerCount.fromNumber(entry.playerCount)
       if (!playerCount.ok) return playerCount
+      const details = detailsFromData(entry)
+      if (!details.ok) return fail(`Spiel "${entry.name}": ${details.error}`)
 
-      games.push(new Game(id.value, name.value, playerCount.value))
+      games.push(new Game(id.value, name.value, playerCount.value, details.value))
     }
     return ok(new GameCollection(games))
   }
@@ -53,6 +58,13 @@ export class GameCollection {
       id: game.id.value,
       name: game.name.text,
       playerCount: game.playerCount.value,
+      playTimeMin: game.details.playTime?.min ?? null,
+      playTimeMax: game.details.playTime?.max ?? null,
+      playTimeOpenEnded: game.details.playTime?.openEnded ?? false,
+      lastPlayed: game.details.lastPlayed?.isoDate ?? null,
+      genre: game.details.genres.main,
+      secondaryGenres: [...game.details.genres.secondary],
+      description: game.details.description,
     }))
   }
 
@@ -74,17 +86,26 @@ export class GameCollection {
   }
 
   // Neues Spiel hinten anhängen. Es bekommt eine neue ID.
-  add(name: GameName, playerCount: PlayerCount): Result<ChangedCollection> {
+  add(
+    name: GameName,
+    playerCount: PlayerCount,
+    details: GameDetails = noDetails,
+  ): Result<ChangedCollection> {
     if (this.isNameTaken(name)) {
       return fail(nameTakenMessage(name))
     }
 
-    const game = new Game(GameId.create(), name, playerCount)
+    const game = new Game(GameId.create(), name, playerCount, details)
     return ok({ collection: new GameCollection([...this.games, game]), game })
   }
 
   // Vorhandenes Spiel ändern. Es behält seine ID und seinen Platz in der Sammlung.
-  change(id: GameId, name: GameName, playerCount: PlayerCount): Result<ChangedCollection> {
+  change(
+    id: GameId,
+    name: GameName,
+    playerCount: PlayerCount,
+    details: GameDetails = noDetails,
+  ): Result<ChangedCollection> {
     if (this.findById(id) === null) {
       return fail('Dieses Spiel gibt es in der Sammlung nicht mehr.')
     }
@@ -92,7 +113,7 @@ export class GameCollection {
       return fail(nameTakenMessage(name))
     }
 
-    const game = new Game(id, name, playerCount)
+    const game = new Game(id, name, playerCount, details)
     const games = this.games.map((existing) => (existing.id.equals(id) ? game : existing))
     return ok({ collection: new GameCollection(games), game })
   }
@@ -156,6 +177,41 @@ function findProblem(data: readonly GameData[]): string | null {
   }
 
   return null
+}
+
+// Prüft die freiwilligen Angaben eines gespeicherten Spiels
+function detailsFromData(entry: GameData): Result<GameDetails> {
+  let playTime: PlayTime | null = null
+  if (entry.playTimeMin !== null) {
+    const result = PlayTime.fromNumbers(
+      entry.playTimeMin,
+      entry.playTimeMax,
+      entry.playTimeOpenEnded,
+    )
+    if (!result.ok) return result
+    playTime = result.value
+  } else if (entry.playTimeMax !== null) {
+    return fail('Die Spieldauer hat ein "bis", aber kein "von".')
+  } else if (entry.playTimeOpenEnded) {
+    return fail('Die Spieldauer ist nach oben offen, hat aber kein "von".')
+  }
+
+  let lastPlayed: LastPlayed | null = null
+  if (entry.lastPlayed !== null) {
+    const result = LastPlayed.fromString(entry.lastPlayed)
+    if (!result.ok) return result
+    lastPlayed = result.value
+  }
+
+  const genres = GameGenres.create(entry.genre, entry.secondaryGenres)
+  if (!genres.ok) return genres
+
+  return ok({
+    playTime,
+    lastPlayed,
+    genres: genres.value,
+    description: cleanDescription(entry.description),
+  })
 }
 
 // Sortiert Einträge nach einem Merkmal in Gruppen und gibt nur die Gruppen mit mehreren Einträgen zurück

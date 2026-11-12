@@ -14,10 +14,12 @@ import {
   dixitData,
   expectError,
   expectOk,
+  fluegelschlag,
   fluegelschlagData,
   games,
   gamesData,
   names,
+  noDetailsData,
 } from '../testData'
 
 const name = (text: string) => expectOk(GameName.create(text))
@@ -55,6 +57,14 @@ describe('Ändern', () => {
     expect(game.id.equals(azul.id)).toBe(true)
   })
 
+  test('Die freiwilligen Angaben werden beim Hinzufügen und Ändern übernommen', () => {
+    const details = fluegelschlag.details
+    expect(expectOk(games.add(name('Monopoly'), count(4), details)).game.details).toBe(details)
+    expect(expectOk(games.change(dixit.id, name('Dixit'), count(3), details)).game.details).toBe(
+      details,
+    )
+  })
+
   test('Ändern ändert die Anzahl der Spiele nicht', () => {
     const { collection } = expectOk(games.change(dixit.id, name('Dixit'), count(8)))
     expect(collection.games).toHaveLength(games.games.length)
@@ -89,6 +99,7 @@ describe('Sortieren', () => {
   // Sammlung nur aus Namen, für die Sortier-Tests
   const sortedNames = (gameNames: string[]) => {
     const data = gameNames.map((text) => ({
+      ...noDetailsData,
       id: GameId.create().value,
       name: text,
       playerCount: 2,
@@ -180,5 +191,38 @@ describe('Gespeicherte Daten prüfen', () => {
   test('IDs werden vor dem Inhalt geprüft', () => {
     const message = restoreError([{ ...dixitData, id: GameId.emptyValue, name: '' }])
     expect(message).toContain('leere ID')
+  })
+
+  test.each<[Partial<GameData>, string]>([
+    [{ playTimeMin: 0 }, 'Die Spieldauer muss mindestens 1 Minute sein.'],
+    [{ playTimeMin: 60, playTimeMax: 30 }, 'Bei der Spieldauer darf "von" nicht größer als "bis" sein.'],
+    [{ playTimeMin: null, playTimeMax: 30 }, 'Die Spieldauer hat ein "bis", aber kein "von".'],
+    [
+      { playTimeMin: null, playTimeOpenEnded: true },
+      'Die Spieldauer ist nach oben offen, hat aber kein "von".',
+    ],
+    [
+      { playTimeMin: 30, playTimeMax: 60, playTimeOpenEnded: true },
+      'Eine Spieldauer, die nach oben offen ist, kann kein "bis" haben.',
+    ],
+    [{ lastPlayed: '2026-02-30' }, '"2026-02-30" ist kein gültiges Datum.'],
+    [{ genre: 'quatsch' }, '"quatsch" ist kein bekanntes Genre.'],
+    [{ genre: null, secondaryGenres: ['card'] }, 'Nebengenres gehen nur zusammen mit einem Genre.'],
+    [{ genre: 'card', secondaryGenres: ['card'] }, 'Das Genre kann nicht zugleich Nebengenre sein.'],
+  ])('Ungültige freiwillige Angabe %j wird mit dem Spielnamen gemeldet', (changes, expected) => {
+    const message = restoreError([dixitData, { ...azulData, ...changes }])
+    expect(message).toBe(`Spiel "Azul": ${expected}`)
+  })
+
+  test('Eine Spieldauer nach oben offen bleibt beim Wiederherstellen erhalten', () => {
+    const data = [{ ...dixitData, playTimeMin: 60, playTimeOpenEnded: true }]
+    const collection = expectOk(GameCollection.restore(data))
+    expect(collection.games[0]?.details.playTime?.text).toBe('ab 60 Minuten')
+    expect(collection.toData()).toEqual(data)
+  })
+
+  test('Eine Beschreibung nur aus Leerzeichen gilt als nicht ausgefüllt', () => {
+    const collection = expectOk(GameCollection.restore([{ ...dixitData, description: '   ' }]))
+    expect(collection.games[0]?.details.description).toBeNull()
   })
 })

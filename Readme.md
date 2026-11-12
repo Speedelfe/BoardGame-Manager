@@ -12,6 +12,8 @@ weiter erreichbar.
 ## Was die App kann
 
 - Spiele mit Name und Spieleranzahl anlegen, bearbeiten und löschen
+- Freiwillig zu jedem Spiel: Spieldauer in Minuten (eine Zahl, von-bis oder nach oben offen), Genre und Nebengenres,
+  zuletzt gespielt und eine Beschreibung
 - Alle Spiele in einer alphabetisch sortierten Liste anzeigen
 - Die Sammlung automatisch in einer Datei speichern und beim Start wieder laden
 
@@ -59,8 +61,8 @@ starten und an einen beliebigen Ort kopieren.
 Der Code ist in Schichten aufgeteilt. Jede Schicht kennt nur die Schichten, die in dieser Liste
 über ihr stehen:
 
-- `src/domain` – die Fachlogik: Spiel, Name, Spieleranzahl, Sammlung und ihre Regeln. Kennt weder
-  Vue noch Dateien.
+- `src/domain` – die Fachlogik: Spiel, Name, Spieleranzahl, Spieldauer, Genres, Sammlung und ihre
+  Regeln. Kennt weder Vue noch Dateien.
 - `src/application` – die Abläufe: Spiel speichern, Spiel löschen.
 - `src/infrastructure` – die Technik: Speichern als JSON-Datei und die Verbindung zwischen
   Oberfläche und Hintergrundteil.

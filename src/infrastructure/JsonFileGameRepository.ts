@@ -9,10 +9,18 @@ import { errorMessage, fail, ok, type Result } from '../domain/Result'
 
 // So steht ein Spiel in der Datei. Das Format ist dasselbe wie in der alten F#-App,
 // deshalb heißt die Spieleranzahl hier weiter "playerNumbers".
+// Die freiwilligen Angaben kannte die alte App noch nicht. Sie dürfen in der Datei fehlen.
 interface StoredGame {
   id: string
   name: string
   playerNumbers: number
+  playTimeMin: number | null
+  playTimeMax: number | null
+  playTimeOpenEnded: boolean
+  lastPlayed: string | null
+  genre: string | null
+  secondaryGenres: string[]
+  description: string | null
 }
 
 // Speichert die Sammlung als JSON-Datei. Läuft nur im Hintergrundteil von Electron (Node).
@@ -49,6 +57,13 @@ export class JsonFileGameRepository implements GameRepository {
       id: game.id,
       name: game.name,
       playerNumbers: game.playerCount,
+      playTimeMin: game.playTimeMin,
+      playTimeMax: game.playTimeMax,
+      playTimeOpenEnded: game.playTimeOpenEnded,
+      lastPlayed: game.lastPlayed,
+      genre: game.genre,
+      secondaryGenres: game.secondaryGenres,
+      description: game.description,
     }))
     const json = JSON.stringify({ gameList }, null, 2)
 
@@ -88,9 +103,51 @@ function readGameList(content: unknown): Result<GameData[]> {
     if (typeof playerNumbers !== 'number') {
       return fail(`${position}: Das Feld "playerNumbers" fehlt oder ist keine Zahl.`)
     }
-    games.push({ id, name, playerCount: playerNumbers })
+
+    // Freiwillige Angaben: Fehlt ein Feld (oder ist es null), gilt es als nicht ausgefüllt
+    const field = (fieldName: string) => `${position}: Das Feld "${fieldName}"`
+    const { playTimeMin, playTimeMax, lastPlayed, genre, description } = entry
+    const secondaryGenres = entry['secondaryGenres'] ?? []
+    const playTimeOpenEnded = entry['playTimeOpenEnded'] ?? false
+
+    if (!isNumberOrMissing(playTimeMin)) return fail(`${field('playTimeMin')} ist keine Zahl.`)
+    if (!isNumberOrMissing(playTimeMax)) return fail(`${field('playTimeMax')} ist keine Zahl.`)
+    if (typeof playTimeOpenEnded !== 'boolean') {
+      return fail(`${field('playTimeOpenEnded')} ist weder true noch false.`)
+    }
+    if (!isTextOrMissing(lastPlayed)) return fail(`${field('lastPlayed')} ist kein Text.`)
+    if (!isTextOrMissing(genre)) return fail(`${field('genre')} ist kein Text.`)
+    if (!isTextOrMissing(description)) return fail(`${field('description')} ist kein Text.`)
+    if (!isTextList(secondaryGenres)) {
+      return fail(`${field('secondaryGenres')} ist keine Liste von Texten.`)
+    }
+
+    games.push({
+      id,
+      name,
+      playerCount: playerNumbers,
+      playTimeMin: playTimeMin ?? null,
+      playTimeMax: playTimeMax ?? null,
+      playTimeOpenEnded,
+      lastPlayed: lastPlayed ?? null,
+      genre: genre ?? null,
+      secondaryGenres,
+      description: description ?? null,
+    })
   }
   return ok(games)
+}
+
+function isNumberOrMissing(value: unknown): value is number | null | undefined {
+  return value === null || value === undefined || typeof value === 'number'
+}
+
+function isTextOrMissing(value: unknown): value is string | null | undefined {
+  return value === null || value === undefined || typeof value === 'string'
+}
+
+function isTextList(value: unknown): value is string[] {
+  return Array.isArray(value) && value.every((entry) => typeof entry === 'string')
 }
 
 function isObject(value: unknown): value is Record<string, unknown> {

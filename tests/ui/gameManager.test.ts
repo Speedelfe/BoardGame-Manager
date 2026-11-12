@@ -164,6 +164,47 @@ describe('Speichern', () => {
       expect(await loadFrom(path)).toEqual(state.collection)
     }))
 
+  test('Speichern mit freiwilligen Angaben: im Spiel und in der Datei', () =>
+    withTestFolder(async (folder) => {
+      const path = join(folder, 'games.json')
+      const manager = managerWith(new JsonFileGameRepository(path))
+      manager.showNewGame()
+      manager.changeName('Monopoly')
+      manager.changePlayerCount('4')
+      manager.changePlayTimeMin('60')
+      manager.changePlayTimeMax('180')
+      manager.changeGenre('dice')
+      manager.toggleSecondaryGenre('party')
+      manager.changeLastPlayed('2025-12-24')
+      manager.changeDescription('Dauert ewig.')
+      await manager.saveForm()
+
+      const state = manager.state.value
+      expect(state.form.error).toBeNull()
+      expect(state.chosenGame?.details.playTime?.text).toBe('60–180 Minuten')
+      expect(state.chosenGame?.details.genres.main).toBe('dice')
+      expect(state.chosenGame?.details.genres.secondary).toEqual(['party'])
+      expect(state.chosenGame?.details.lastPlayed?.text).toBe('24.12.2025')
+      expect(state.chosenGame?.details.description).toBe('Dauert ewig.')
+      expect(await loadFrom(path)).toEqual(state.collection)
+    }))
+
+  test('Ungültige freiwillige Angabe zeigt den Fehler, Tippen blendet ihn wieder aus', async () => {
+    const manager = managerWith(new MemoryGameRepository())
+    manager.showNewGame()
+    manager.changeName('Monopoly')
+    manager.changePlayerCount('4')
+    manager.changePlayTimeMin('90')
+    manager.changePlayTimeMax('60')
+    await manager.saveForm()
+    expect(manager.state.value.form.error).toBe(
+      'Bei der Spieldauer darf "von" nicht größer als "bis" sein.',
+    )
+
+    manager.changePlayTimeMax('120')
+    expect(manager.state.value.form.error).toBeNull()
+  })
+
   test('Speichern eines bearbeiteten Spiels ersetzt es in Sammlung und Datei', () =>
     withTestFolder(async (folder) => {
       const path = join(folder, 'games.json')

@@ -4,8 +4,18 @@ import { removeGame } from '../application/removeGame'
 import { saveGame } from '../application/saveGame'
 import type { Game } from '../domain/Game'
 import { GameCollection } from '../domain/GameCollection'
+import type { Genre } from '../domain/GameGenres'
 import type { GameRepository } from '../domain/GameRepository'
-import { emptyForm, formFromGame, formHasChanges, type GameForm } from './gameForm'
+import {
+  emptyForm,
+  formFromGame,
+  formHasChanges,
+  withGenre,
+  withPlayTimeMin,
+  withPlayTimeOpenEnded,
+  withSecondaryGenreToggled,
+  type GameForm,
+} from './gameForm'
 
 // Wo wir beim Löschen des ausgewählten Spiels gerade stehen
 export type DeleteState =
@@ -138,13 +148,49 @@ export function createGameManager(repository: GameRepository, startState: State 
     change({ formOpen: true, form: formFromGame(game), deleteState: { kind: 'notAsked' } })
   }
 
-  // Bei jeder Eingabe merken wir uns den Text und blenden einen alten Fehler aus
+  // Bei jeder Eingabe merken wir uns das geänderte Formular und blenden einen alten Fehler aus
+  function changeForm(form: GameForm): void {
+    change({ form: { ...form, error: null } })
+  }
+
   function changeName(text: string): void {
-    change({ form: { ...state.value.form, nameInput: text, error: null } })
+    changeForm({ ...state.value.form, nameInput: text })
   }
 
   function changePlayerCount(text: string): void {
-    change({ form: { ...state.value.form, playerCountInput: text, error: null } })
+    changeForm({ ...state.value.form, playerCountInput: text })
+  }
+
+  // Spieldauer "von". Wird sie geleert, wird auch "bis" geleert.
+  function changePlayTimeMin(text: string): void {
+    changeForm(withPlayTimeMin(state.value.form, text))
+  }
+
+  function changePlayTimeMax(text: string): void {
+    changeForm({ ...state.value.form, playTimeMaxInput: text })
+  }
+
+  // Häkchen "nach oben offen" bei der Spieldauer. Mit Häkchen wird "bis" geleert.
+  function changePlayTimeOpenEnded(openEnded: boolean): void {
+    changeForm(withPlayTimeOpenEnded(state.value.form, openEnded))
+  }
+
+  function changeLastPlayed(text: string): void {
+    changeForm({ ...state.value.form, lastPlayedInput: text })
+  }
+
+  // Genre auswählen. Die Nebengenres werden dabei passend bereinigt.
+  function changeGenre(text: string): void {
+    changeForm(withGenre(state.value.form, text))
+  }
+
+  // Häkchen bei einem Nebengenre setzen oder wegnehmen
+  function toggleSecondaryGenre(genre: Genre): void {
+    changeForm(withSecondaryGenreToggled(state.value.form, genre))
+  }
+
+  function changeDescription(text: string): void {
+    changeForm({ ...state.value.form, descriptionInput: text })
   }
 
   // Beim Bearbeiten zurück zu den Details des Spiels, sonst einfach Formular schließen
@@ -171,6 +217,13 @@ export function createGameManager(repository: GameRepository, startState: State 
       editing: form.editing,
       name: form.nameInput,
       playerCount: form.playerCountInput,
+      playTimeMin: form.playTimeMinInput,
+      playTimeMax: form.playTimeMaxInput,
+      playTimeOpenEnded: form.playTimeOpenEndedInput,
+      lastPlayed: form.lastPlayedInput,
+      genre: form.genreInput,
+      secondaryGenres: form.secondaryGenresInput,
+      description: form.descriptionInput,
     })
 
     if (!saved.ok) {
@@ -231,6 +284,13 @@ export function createGameManager(repository: GameRepository, startState: State 
     editChosenGame,
     changeName,
     changePlayerCount,
+    changePlayTimeMin,
+    changePlayTimeMax,
+    changePlayTimeOpenEnded,
+    changeLastPlayed,
+    changeGenre,
+    toggleSecondaryGenre,
+    changeDescription,
     cancelForm,
     saveForm,
     askDeleteChosenGame,

@@ -2,20 +2,50 @@
 import { describe, expect, test } from 'vitest'
 
 import { removeGame } from '../../src/application/removeGame'
-import { saveGame } from '../../src/application/saveGame'
-import type { Game } from '../../src/domain/Game'
+import { saveGame, type GameInput } from '../../src/application/saveGame'
+import { noDetails, type Game } from '../../src/domain/Game'
 import type { GameCollection } from '../../src/domain/GameCollection'
 import type { GameRepository } from '../../src/domain/GameRepository'
 import { ok, type Result } from '../../src/domain/Result'
-import { azul, dixit, expectError, expectOk, games, MemoryGameRepository, names } from '../testData'
+import {
+  azul,
+  dixit,
+  expectError,
+  expectOk,
+  fluegelschlag,
+  games,
+  MemoryGameRepository,
+  names,
+} from '../testData'
+
+// Die freiwilligen Angaben, alle leer gelassen
+const noDetailsInput = {
+  playTimeMin: '',
+  playTimeMax: '',
+  playTimeOpenEnded: false,
+  lastPlayed: '',
+  genre: '',
+  secondaryGenres: [],
+  description: '',
+}
 
 // Neues Spiel mit diesen Eingaben speichern
 const saveNew = (repository: GameRepository, name: string, playerCount: string) =>
-  saveGame(repository, games, { editing: null, name, playerCount })
+  saveGame(repository, games, { ...noDetailsInput, editing: null, name, playerCount })
 
 // Vorhandenes Spiel mit geänderten Eingaben speichern
 const saveEdited = (repository: GameRepository, game: Game, name: string, playerCount: string) =>
-  saveGame(repository, games, { editing: game, name, playerCount })
+  saveGame(repository, games, { ...noDetailsInput, editing: game, name, playerCount })
+
+// Neues Spiel "Monopoly" mit diesen freiwilligen Angaben speichern
+const saveWithDetails = (details: Partial<GameInput>) =>
+  saveGame(new MemoryGameRepository(), games, {
+    ...noDetailsInput,
+    editing: null,
+    name: 'Monopoly',
+    playerCount: '4',
+    ...details,
+  })
 
 // Repository, bei dem das Speichern immer fehlschlägt
 class BrokenRepository implements GameRepository {
@@ -71,6 +101,64 @@ describe('Neues Spiel speichern', () => {
   test('Schlägt das Speichern fehl, gibt es eine Fehlermeldung', async () => {
     const message = expectError(await saveNew(new BrokenRepository(), 'Monopoly', '4'))
     expect(message).toBe('Speichern hat nicht geklappt: Platte voll')
+  })
+})
+
+describe('Freiwillige Angaben speichern', () => {
+  test('Ohne freiwillige Angaben bleibt alles leer', async () => {
+    const { game } = expectOk(await saveWithDetails({}))
+    expect(game.details).toEqual(noDetails)
+  })
+
+  test('Alle freiwilligen Angaben werden übernommen', async () => {
+    const { game } = expectOk(
+      await saveWithDetails({
+        playTimeMin: '60',
+        playTimeMax: '180',
+        lastPlayed: '2025-12-24',
+        genre: 'dice',
+        secondaryGenres: ['party', 'strategy'],
+        description: '  Dauert ewig.  ',
+      }),
+    )
+    expect(game.details.playTime?.text).toBe('60–180 Minuten')
+    expect(game.details.lastPlayed?.text).toBe('24.12.2025')
+    expect(game.details.genres.main).toBe('dice')
+    expect(game.details.genres.secondary).toEqual(['strategy', 'party'])
+    expect(game.details.description).toBe('Dauert ewig.')
+  })
+
+  test('Spieldauer nach oben offen wird übernommen', async () => {
+    const { game } = expectOk(await saveWithDetails({ playTimeMin: '60', playTimeOpenEnded: true }))
+    expect(game.details.playTime?.text).toBe('ab 60 Minuten')
+  })
+
+  test.each<[Partial<GameInput>, string]>([
+    [{ playTimeOpenEnded: true }, 'Bitte gib bei der Spieldauer zuerst "von" an.'],
+    [{ playTimeMin: 'lang' }, 'Die Spieldauer muss eine ganze Zahl in Minuten sein.'],
+    [{ playTimeMax: '60' }, 'Bitte gib bei der Spieldauer zuerst "von" an.'],
+    [{ playTimeMin: '90', playTimeMax: '60' }, 'Bei der Spieldauer darf "von" nicht größer als "bis" sein.'],
+    [{ lastPlayed: '9999-01-01' }, '"Zuletzt gespielt" darf nicht in der Zukunft liegen.'],
+    [{ secondaryGenres: ['card'] }, 'Nebengenres gehen nur zusammen mit einem Genre.'],
+    [{ genre: 'card', secondaryGenres: ['card'] }, 'Das Genre kann nicht zugleich Nebengenre sein.'],
+  ])('Ungültige Angabe %j wird abgelehnt', async (details, expected) => {
+    expect(expectError(await saveWithDetails(details))).toBe(expected)
+  })
+
+  test('Beim Bearbeiten ersetzen die neuen Angaben die alten', async () => {
+    const { game } = expectOk(
+      await saveGame(new MemoryGameRepository(), games, {
+        ...noDetailsInput,
+        editing: fluegelschlag,
+        name: 'Flügelschlag',
+        playerCount: '5',
+        playTimeMin: '50',
+      }),
+    )
+    expect(game.details.playTime?.text).toBe('50 Minuten')
+    expect(game.details.lastPlayed).toBeNull()
+    expect(game.details.genres.main).toBeNull()
+    expect(game.details.description).toBeNull()
   })
 })
 

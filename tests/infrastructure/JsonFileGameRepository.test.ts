@@ -40,11 +40,8 @@ async function writeGameList(path: string, gameList: object[]): Promise<void> {
   await writeFile(path, JSON.stringify({ gameList }), 'utf8')
 }
 
-const stored = (game: GameData) => ({
-  id: game.id,
-  name: game.name,
-  playerNumbers: game.playerCount,
-})
+// Ein Spiel so, wie es in der Datei steht: Die Spieleranzahl heißt dort "playerNumbers"
+const stored = ({ playerCount, ...rest }: GameData) => ({ ...rest, playerNumbers: playerCount })
 
 describe('Laden und Speichern', () => {
   test('Fehlende Datei ergibt eine leere Sammlung', () =>
@@ -57,6 +54,14 @@ describe('Laden und Speichern', () => {
       const path = join(folder, 'games.json')
       await new JsonFileGameRepository(path).save(games)
       expect(await loadData(path)).toEqual(gamesData)
+    }))
+
+  test('Eine Spieldauer nach oben offen wird genauso wieder geladen', () =>
+    withTestFolder(async (folder) => {
+      const path = join(folder, 'games.json')
+      const data = [{ ...dixitData, playTimeMin: 60, playTimeOpenEnded: true }]
+      await new JsonFileGameRepository(path).save(collectionOf(data))
+      expect(await loadData(path)).toEqual(data)
     }))
 
   test('Speichern legt einen fehlenden Ordner an', () =>
@@ -151,6 +156,29 @@ describe('Fehler beim Laden', () => {
       const path = join(folder, 'games.json')
       await writeGameList(path, [stored({ ...dixitData, playerCount: 0 })])
       expect(await loadError(path)).toContain('ungültige Spieleranzahl')
+    }))
+
+  test.each([
+    ['playTimeMin', '45'],
+    ['playTimeMax', '60'],
+    ['playTimeOpenEnded', 'ja'],
+    ['lastPlayed', 20261112],
+    ['genre', 3],
+    ['secondaryGenres', 'card'],
+    ['secondaryGenres', [1, 2]],
+    ['description', true],
+  ])('Freiwilliges Feld "%s" mit falscher Art von Wert (%j) ergibt einen Fehler', (field, value) =>
+    withTestFolder(async (folder) => {
+      const path = join(folder, 'games.json')
+      await writeGameList(path, [{ ...stored(dixitData), [field]: value }])
+      expect(causeOf(await loadError(path))).toContain(`Spiel Nr. 1: Das Feld "${field}"`)
+    }))
+
+  test('Ungültige freiwillige Angabe in der Datei ergibt einen Fehler', () =>
+    withTestFolder(async (folder) => {
+      const path = join(folder, 'games.json')
+      await writeGameList(path, [stored({ ...dixitData, genre: 'quatsch' })])
+      expect(causeOf(await loadError(path))).toBe('Spiel "Dixit": "quatsch" ist kein bekanntes Genre.')
     }))
 
   test('Doppelter Spielname in der Datei ergibt einen Fehler', () =>

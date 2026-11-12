@@ -1,8 +1,11 @@
-import type { Game } from '../domain/Game'
+import { cleanDescription, type Game, type GameDetails } from '../domain/Game'
 import type { ChangedCollection, GameCollection } from '../domain/GameCollection'
+import { GameGenres } from '../domain/GameGenres'
 import { GameName } from '../domain/GameName'
 import type { GameRepository } from '../domain/GameRepository'
+import { LastPlayed } from '../domain/LastPlayed'
 import { PlayerCount } from '../domain/PlayerCount'
+import { PlayTime } from '../domain/PlayTime'
 import { errorMessage, fail, type Result } from '../domain/Result'
 
 // Die Eingaben aus dem Formular, noch ungeprüft als Text
@@ -11,6 +14,15 @@ export interface GameInput {
   editing: Game | null
   name: string
   playerCount: string
+  // Die freiwilligen Angaben. Leerer Text (bzw. leere Liste) bedeutet: nicht ausgefüllt.
+  playTimeMin: string
+  playTimeMax: string
+  // Häkchen "nach oben offen"
+  playTimeOpenEnded: boolean
+  lastPlayed: string
+  genre: string
+  secondaryGenres: readonly string[]
+  description: string
 }
 
 // Ablauf "Spiel speichern": Eingaben prüfen, in die Sammlung übernehmen und die Sammlung speichern.
@@ -34,10 +46,30 @@ export async function saveGame(
   const playerCount = PlayerCount.fromInput(input.playerCount)
   if (!playerCount.ok) return playerCount
 
+  const playTime = PlayTime.fromInput(
+    input.playTimeMin,
+    input.playTimeMax,
+    input.playTimeOpenEnded,
+  )
+  if (!playTime.ok) return playTime
+
+  const lastPlayed = LastPlayed.fromInput(input.lastPlayed)
+  if (!lastPlayed.ok) return lastPlayed
+
+  const genres = GameGenres.create(input.genre === '' ? null : input.genre, input.secondaryGenres)
+  if (!genres.ok) return genres
+
+  const details: GameDetails = {
+    playTime: playTime.value,
+    lastPlayed: lastPlayed.value,
+    genres: genres.value,
+    description: cleanDescription(input.description),
+  }
+
   const changed =
     editingId === null
-      ? collection.add(name.value, playerCount.value)
-      : collection.change(editingId, name.value, playerCount.value)
+      ? collection.add(name.value, playerCount.value, details)
+      : collection.change(editingId, name.value, playerCount.value, details)
   if (!changed.ok) return changed
 
   try {

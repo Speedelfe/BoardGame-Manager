@@ -34,7 +34,9 @@ body {
 }
 
 button,
-input {
+input,
+select,
+textarea {
   font: inherit;
   color: inherit;
 }
@@ -56,11 +58,21 @@ button:disabled {
   cursor: default;
 }
 
-input {
+input,
+select,
+textarea {
   padding: 6px 8px;
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: 4px;
+}
+
+input:disabled {
+  opacity: 0.5;
+}
+
+textarea {
+  resize: vertical;
 }
 
 .error {
@@ -138,7 +150,20 @@ input {
 }
 
 .detail p {
-  margin: 0;
+  margin: 0 0 3px;
+}
+
+/* Lange Beschreibungen: Die Infos bekommen einen Rollbalken, die Knöpfe bleiben unten sichtbar */
+.detail-info {
+  min-height: 0;
+  margin-bottom: 10px;
+  overflow-y: auto;
+}
+
+/* Zeilenumbrüche so anzeigen, wie sie eingetippt wurden */
+.detail .description {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
 }
 
 .game-form {
@@ -147,6 +172,43 @@ input {
   gap: 5px;
   width: 300px;
   margin: 10px;
+  padding-right: 5px;
+  overflow-y: auto;
+}
+
+/* Spieldauer: "von" und "bis" nebeneinander */
+.play-time {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.play-time input {
+  flex: 1;
+  min-width: 0;
+}
+
+/* Nebengenres: Häkchen in zwei Spalten */
+.secondary-genres {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 4px 10px;
+  margin: 0;
+  padding: 6px 8px;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+}
+
+.secondary-genres label,
+.checkbox-line {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.secondary-genres input,
+.checkbox-line input {
+  margin: 0;
 }
 
 .game-form h2 {

@@ -1,11 +1,30 @@
 <script setup lang="ts">
+import { computed } from 'vue'
+
 import type { Game } from '../../domain/Game'
+import { genreNames } from '../../domain/GameGenres'
 import type { DeleteState } from '../gameManager'
 
-defineProps<{
+const props = defineProps<{
   game: Game
   deleteState: DeleteState
 }>()
+
+// Das steht bei Angaben, die nicht ausgefüllt wurden
+const empty = '–'
+
+// Die freiwilligen Angaben als Text für die Anzeige
+const info = computed(() => {
+  const { playTime, lastPlayed, genres, description } = props.game.details
+
+  return {
+    playTime: playTime?.text ?? empty,
+    genre: genres.main === null ? empty : genreNames[genres.main],
+    secondaryGenres: genres.secondary.map((genre) => genreNames[genre]).join(', ') || empty,
+    lastPlayed: lastPlayed?.text ?? empty,
+    description: description ?? empty,
+  }
+})
 
 // Die Knöpfe schicken nur Ereignisse, nicht das Spiel selbst:
 // Der Programmablauf weiß, welches Spiel gerade ausgewählt ist.
@@ -22,6 +41,12 @@ defineEmits<{
     <div class="detail-info">
       <h1>{{ game.name.text }}</h1>
       <p>Spieler: {{ game.playerCount.value }}</p>
+      <p>Spieldauer: {{ info.playTime }}</p>
+      <p>Genre: {{ info.genre }}</p>
+      <p>Nebengenres: {{ info.secondaryGenres }}</p>
+      <p>Zuletzt gespielt: {{ info.lastPlayed }}</p>
+      <!-- Zeilenumbrüche der Beschreibung bleiben erhalten (siehe style.css) -->
+      <p class="description">Beschreibung: {{ info.description }}</p>
     </div>
 
     <div class="buttons">
