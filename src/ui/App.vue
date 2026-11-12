@@ -4,6 +4,9 @@ import { computed } from 'vue'
 import GameDetail from './components/GameDetail.vue'
 import GameFormPanel from './components/GameFormPanel.vue'
 import GameList from './components/GameList.vue'
+import ShelfDetail from './components/ShelfDetail.vue'
+import ShelfFormPanel from './components/ShelfFormPanel.vue'
+import ShelfList from './components/ShelfList.vue'
 import type { GameManager } from './gameManager'
 
 const props = defineProps<{ manager: GameManager }>()
@@ -21,24 +24,50 @@ const markedGame = computed(() => {
   const pending = state.value.pending
   return pending?.kind === 'showDetail' ? pending.game : state.value.chosenGame
 })
+
+// Die Regale, ebenfalls alphabetisch sortiert, und der Stand der Ansicht "Regale"
+const shelves = computed(() => state.value.shelves.sortedByName())
+const shelfView = computed(() => state.value.shelfView)
 </script>
 
 <template>
   <!-- Menüleiste oben -->
   <header class="menu">
+    <!-- Wechsel zwischen den beiden Ansichten. Die gerade sichtbare ist hervorgehoben. -->
+    <button :class="{ active: state.view === 'games' }" @click="manager.showGames()">Spiele</button>
+    <button :class="{ active: state.view === 'shelves' }" @click="manager.showShelves()">
+      Regale
+    </button>
+
     <!-- Nach einem Ladefehler ausgegraut, weil Speichern dann gesperrt ist -->
-    <button :disabled="state.loadError !== null" @click="manager.showNewGame()">Neues Spiel</button>
+    <button
+      v-if="state.view === 'games'"
+      class="menu-new"
+      :disabled="state.loadError !== null"
+      @click="manager.showNewGame()"
+    >
+      Neues Spiel
+    </button>
+    <button
+      v-else
+      class="menu-new"
+      :disabled="state.loadError !== null"
+      @click="manager.showNewShelf()"
+    >
+      Neues Regal
+    </button>
   </header>
 
   <!-- Fehler beim Laden, unter dem Menü -->
   <p v-if="state.loadError !== null" class="error load-error">
     {{ state.loadError }}
     <br /><br />
-    Solange das so ist, können keine Spiele angelegt oder geändert werden, damit die Datei nicht
-    überschrieben wird. Bitte die Datei reparieren oder wegschieben und die App neu starten.
+    Solange das so ist, können keine Spiele und Regale angelegt oder geändert werden, damit die
+    Datei nicht überschrieben wird. Bitte die Datei reparieren oder wegschieben und die App neu starten.
   </p>
 
-  <main class="content">
+  <!-- Ansicht "Spiele" -->
+  <main v-if="state.view === 'games'" class="content">
     <!-- Liste der Spiele, links -->
     <GameList :games="games" :marked-game="markedGame" @choose="manager.showDetail($event)" />
 
@@ -69,6 +98,34 @@ const markedGame = computed(() => {
       @ask-delete="manager.askDeleteChosenGame()"
       @confirm-delete="manager.confirmDelete()"
       @cancel-delete="manager.cancelDelete()"
+    />
+  </main>
+
+  <!-- Ansicht "Regale", genauso aufgebaut -->
+  <main v-else class="content">
+    <!-- Liste der Regale, links -->
+    <ShelfList
+      :shelves="shelves"
+      :marked-shelf="shelfView.chosenShelf"
+      @choose="manager.showShelfDetail($event)"
+    />
+
+    <!-- Rechts entweder das Formular oder das ausgewählte Regal -->
+    <ShelfFormPanel
+      v-if="shelfView.formOpen"
+      :form="shelfView.form"
+      @change-name="manager.changeShelfName($event)"
+      @save="manager.saveShelfForm()"
+      @cancel="manager.cancelShelfForm()"
+    />
+    <ShelfDetail
+      v-else-if="shelfView.chosenShelf !== null"
+      :shelf="shelfView.chosenShelf"
+      :delete-state="shelfView.deleteState"
+      @rename="manager.renameChosenShelf()"
+      @ask-delete="manager.askDeleteChosenShelf()"
+      @confirm-delete="manager.confirmDeleteShelf()"
+      @cancel-delete="manager.cancelDeleteShelf()"
     />
   </main>
 </template>

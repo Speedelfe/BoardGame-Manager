@@ -88,6 +88,16 @@ textarea {
   border-bottom: 1px solid var(--border);
 }
 
+/* Der Knopf der Ansicht, die gerade zu sehen ist */
+.menu button.active {
+  background: var(--accent);
+}
+
+/* "Neues Spiel" / "Neues Regal" mit etwas Abstand zu den Ansicht-Knöpfen */
+.menu-new {
+  margin-left: 20px;
+}
+
 .load-error {
   margin: 10px;
 }
