@@ -1,9 +1,12 @@
-// Tests für die Value Objects: Spieleranzahl, Name und ID
+// Tests für die Value Objects: Spieleranzahl, Spieldauer, Datum, Genres, Name und ID
 import { describe, expect, test } from 'vitest'
 
+import { GameGenres, genreNames, genres } from '../../src/domain/GameGenres'
 import { GameId } from '../../src/domain/GameId'
 import { GameName } from '../../src/domain/GameName'
+import { LastPlayed, todayIsoDate } from '../../src/domain/LastPlayed'
 import { PlayerCount } from '../../src/domain/PlayerCount'
+import { PlayTime } from '../../src/domain/PlayTime'
 import { expectError, expectOk } from '../testData'
 
 describe('Spieleranzahl', () => {
@@ -32,6 +35,151 @@ describe('Spieleranzahl', () => {
 
   test.each([0, -3, 101, 2.5])('Ungültige Zahl %d wird abgelehnt', (value) => {
     expect(PlayerCount.fromNumber(value).ok).toBe(false)
+  })
+})
+
+describe('Spieldauer', () => {
+  const playTime = (min: string, max: string) => expectOk(PlayTime.fromInput(min, max))
+
+  test('Beide Felder leer: keine Spieldauer', () => {
+    expect(playTime('', '')).toBeNull()
+    expect(playTime('  ', ' ')).toBeNull()
+  })
+
+  test('Nur "von" ergibt eine einzelne Zahl', () => {
+    const single = playTime(' 45 ', '')
+    expect(single?.min).toBe(45)
+    expect(single?.max).toBeNull()
+    expect(single?.text).toBe('45 Minuten')
+  })
+
+  test('"von" und "bis" ergeben einen Bereich', () => {
+    const range = playTime('30', '60')
+    expect(range?.min).toBe(30)
+    expect(range?.max).toBe(60)
+    expect(range?.text).toBe('30–60 Minuten')
+  })
+
+  test('Gleiche Zahlen bei "von" und "bis" werden zu einer einzelnen Zahl', () => {
+    const single = playTime('60', '60')
+    expect(single?.max).toBeNull()
+    expect(single?.text).toBe('60 Minuten')
+  })
+
+  test('Die kleinste und die größte erlaubte Spieldauer werden angenommen', () => {
+    expect(playTime('1', '1440')?.text).toBe('1–1440 Minuten')
+    expect(playTime('1', '')?.text).toBe('1 Minute')
+  })
+
+  test('Nach oben offen: "ab ..." ohne "bis"', () => {
+    const open = expectOk(PlayTime.fromInput('60', '', true))
+    expect(open?.min).toBe(60)
+    expect(open?.max).toBeNull()
+    expect(open?.openEnded).toBe(true)
+    expect(open?.text).toBe('ab 60 Minuten')
+    expect(expectOk(PlayTime.fromInput('1', '', true))?.text).toBe('ab 1 Minute')
+  })
+
+  test('Ohne Häkchen ist die Spieldauer nicht nach oben offen', () => {
+    expect(playTime('45', '')?.openEnded).toBe(false)
+    expect(playTime('30', '60')?.openEnded).toBe(false)
+  })
+
+  test('Nach oben offen geht nicht ohne "von" und nicht zusammen mit "bis"', () => {
+    expect(expectError(PlayTime.fromInput('', '', true))).toBe(
+      'Bitte gib bei der Spieldauer zuerst "von" an.',
+    )
+    expect(expectError(PlayTime.fromInput('30', '60', true))).toBe(
+      'Eine Spieldauer, die nach oben offen ist, kann kein "bis" haben.',
+    )
+  })
+
+  test.each([
+    ['', '60', 'Bitte gib bei der Spieldauer zuerst "von" an.'],
+    ['lang', '', 'Die Spieldauer muss eine ganze Zahl in Minuten sein.'],
+    ['1,5', '', 'Die Spieldauer muss eine ganze Zahl in Minuten sein.'],
+    ['30', 'ewig', 'Die Spieldauer muss eine ganze Zahl in Minuten sein.'],
+    ['-5', '', 'Die Spieldauer muss eine ganze Zahl in Minuten sein.'],
+    ['0', '', 'Die Spieldauer muss mindestens 1 Minute sein.'],
+    ['1441', '', 'Die Spieldauer darf höchstens 1440 Minuten sein.'],
+    ['30', '99999999999999999999', 'Die Spieldauer darf höchstens 1440 Minuten sein.'],
+    ['60', '30', 'Bei der Spieldauer darf "von" nicht größer als "bis" sein.'],
+  ])('Ungültige Eingabe ("%s", "%s") ergibt die passende Fehlermeldung', (min, max, expected) => {
+    expect(expectError(PlayTime.fromInput(min, max))).toBe(expected)
+  })
+
+  test.each([
+    [0, null],
+    [2.5, null],
+    [30, 1441],
+    [60, 30],
+  ])('Ungültige Zahlen (%d, %d) werden abgelehnt', (min, max) => {
+    expect(PlayTime.fromNumbers(min, max).ok).toBe(false)
+  })
+})
+
+describe('Zuletzt gespielt', () => {
+  const today = '2026-11-12'
+
+  test('Leeres Feld: kein Datum', () => {
+    expect(expectOk(LastPlayed.fromInput('', today))).toBeNull()
+  })
+
+  test('Heute und frühere Tage werden angenommen und deutsch angezeigt', () => {
+    expect(expectOk(LastPlayed.fromInput('2026-11-12', today))?.text).toBe('12.11.2026')
+    expect(expectOk(LastPlayed.fromInput('2025-03-07', today))?.text).toBe('07.03.2025')
+  })
+
+  test('Ein Tag in der Zukunft wird abgelehnt', () => {
+    expect(expectError(LastPlayed.fromInput('2026-11-13', today))).toBe(
+      '"Zuletzt gespielt" darf nicht in der Zukunft liegen.',
+    )
+  })
+
+  test.each(['12.11.2026', '2026-13-01', '2026-02-30', 'gestern'])(
+    'Ungültiges Datum "%s" wird abgelehnt',
+    (text) => {
+      expect(expectError(LastPlayed.fromString(text))).toBe(`"${text}" ist kein gültiges Datum.`)
+    },
+  )
+
+  test('Der heutige Tag hat die Form Jahr-Monat-Tag', () => {
+    expect(LastPlayed.fromString(todayIsoDate()).ok).toBe(true)
+  })
+})
+
+describe('Genres', () => {
+  test('Ohne Genre und Nebengenres ist alles leer', () => {
+    const none = expectOk(GameGenres.create(null, []))
+    expect(none.main).toBeNull()
+    expect(none.secondary).toEqual([])
+  })
+
+  test('Nebengenres stehen in der Reihenfolge der Auswahlliste, keins doppelt', () => {
+    const chosen = expectOk(GameGenres.create('party', ['dice', 'card', 'dice']))
+    expect(chosen.main).toBe('party')
+    expect(chosen.secondary).toEqual(['card', 'dice'])
+  })
+
+  test('Jedes Genre hat einen Namen für die Anzeige', () => {
+    expect(genres.map((genre) => genreNames[genre])).toEqual([
+      'Strategie',
+      'Karten',
+      'Rätsel',
+      'Würfel',
+      'Enginebuilder',
+      'Party',
+      'Sonstiges',
+    ])
+  })
+
+  test.each<[string | null, string[], string]>([
+    [null, ['card'], 'Nebengenres gehen nur zusammen mit einem Genre.'],
+    ['card', ['card', 'dice'], 'Das Genre kann nicht zugleich Nebengenre sein.'],
+    ['quatsch', [], '"quatsch" ist kein bekanntes Genre.'],
+    ['card', ['quatsch'], '"quatsch" ist kein bekanntes Genre.'],
+  ])('Ungültige Auswahl (%s, %j) wird abgelehnt', (main, secondary, expected) => {
+    expect(expectError(GameGenres.create(main, secondary))).toBe(expected)
   })
 })
 
