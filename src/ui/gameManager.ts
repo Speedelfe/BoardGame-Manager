@@ -19,6 +19,7 @@ import {
   withSecondaryGenreToggled,
   type GameForm,
 } from './gameForm'
+import { createShelfActions, initialShelfView, type ShelfViewState } from './shelfActions'
 
 // Wo wir beim Löschen des ausgewählten Spiels gerade stehen
 export type DeleteState =
@@ -28,10 +29,17 @@ export type DeleteState =
 
 // Ein Klick, der das offene Formular mit ungespeicherten Eingaben schließen würde.
 // Er wartet auf die Antwort zu "Änderungen verwerfen?".
-export type PendingAction = { kind: 'showDetail'; game: Game } | { kind: 'showNewGame' }
+export type PendingAction =
+  | { kind: 'showDetail'; game: Game }
+  | { kind: 'showNewGame' }
+  | { kind: 'showShelves' }
 
 // Der gesamte Stand der Oberfläche
 export interface State {
+  // Welche Ansicht gerade zu sehen ist: die Spiele oder die Regale
+  view: 'games' | 'shelves'
+  // Der Stand der Ansicht "Regale" (siehe shelfActions.ts)
+  shelfView: ShelfViewState
   collection: GameCollection
   // Die Regale, in denen Spiele stehen können
   shelves: ShelfCollection
@@ -47,6 +55,8 @@ export interface State {
 
 export function initialState(): State {
   return {
+    view: 'games',
+    shelfView: initialShelfView(),
     collection: GameCollection.empty(),
     shelves: ShelfCollection.empty(),
     chosenGame: null,
@@ -64,7 +74,7 @@ export interface Repositories {
   shelves: ShelfRepository
 }
 
-export type GameManager =ReturnType<typeof createGameManager>
+export type GameManager = ReturnType<typeof createGameManager>
 
 // Der Programmablauf: Jede Funktion steht für etwas, das man in der Oberfläche tun kann,
 // und macht aus dem alten Stand einen neuen. Der Stand wird nie verändert, sondern immer ersetzt.
@@ -146,9 +156,35 @@ export function createGameManager(repositories: Repositories, startState: State 
     change({ formOpen: false, pending: null })
     if (pending.kind === 'showDetail') {
       showDetail(pending.game)
-    } else {
+    } else if (pending.kind === 'showNewGame') {
       showNewGame()
+    } else {
+      showShelves()
     }
+  }
+
+  // Klick auf "Regale" in der Menüleiste: zur Ansicht mit den Regalen wechseln
+  function showShelves(): void {
+    // Ungespeicherte Eingaben im Spiel-Formular: erst nachfragen
+    if (hasUnsavedInput()) {
+      change({ pending: { kind: 'showShelves' } })
+      return
+    }
+    // Ein offenes Spiel-Formular wird geschlossen. Das ausgewählte Spiel bleibt ausgewählt.
+    change({
+      view: 'shelves',
+      formOpen: false,
+      form: emptyForm(),
+      deleteState: { kind: 'notAsked' },
+      pending: null,
+    })
+  }
+
+  // Klick auf "Spiele" in der Menüleiste: zurück zur Ansicht mit den Spielen.
+  // Ein offenes Regal-Formular wird dabei geschlossen. Das ausgewählte Regal bleibt ausgewählt.
+  function showGames(): void {
+    const chosenShelf = state.value.shelfView.chosenShelf
+    change({ view: 'games', shelfView: { ...initialShelfView(), chosenShelf } })
   }
 
   // "Nein": Formular bleibt offen, wie es ist
@@ -314,5 +350,9 @@ export function createGameManager(repositories: Repositories, startState: State 
     askDeleteChosenGame,
     cancelDelete,
     confirmDelete,
+    showShelves,
+    showGames,
+    // Alles, was man in der Ansicht "Regale" tun kann
+    ...createShelfActions(state, shelfRepository),
   }
 }
