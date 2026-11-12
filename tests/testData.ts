@@ -8,6 +8,7 @@ import type { GameRepository } from '../src/domain/GameRepository'
 import { ok, type Result } from '../src/domain/Result'
 import type { Shelf, ShelfData } from '../src/domain/Shelf'
 import { ShelfCollection } from '../src/domain/ShelfCollection'
+import type { ShelfRepository } from '../src/domain/ShelfRepository'
 
 // Die freiwilligen Angaben eines Spiels, alle nicht ausgefüllt
 export const noDetailsData = {
@@ -113,6 +114,23 @@ export class MemoryGameRepository implements GameRepository {
 
   async save(collection: GameCollection): Promise<void> {
     this.saved = collection
+    this.saveCount += 1
+  }
+}
+
+// Dasselbe für die Regale
+export class MemoryShelfRepository implements ShelfRepository {
+  saved: ShelfCollection | null = null
+  saveCount = 0
+
+  constructor(private readonly stored: ShelfCollection = ShelfCollection.empty()) {}
+
+  async load(): Promise<Result<ShelfCollection>> {
+    return ok(this.saved ?? this.stored)
+  }
+
+  async save(shelfCollection: ShelfCollection): Promise<void> {
+    this.saved = shelfCollection
     this.saveCount += 1
   }
 }
