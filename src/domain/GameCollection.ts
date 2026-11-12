@@ -6,6 +6,7 @@ import { LastPlayed } from './LastPlayed'
 import { PlayerCount } from './PlayerCount'
 import { PlayTime } from './PlayTime'
 import { fail, ok, type Result } from './Result'
+import { ShelfId } from './ShelfId'
 
 // Deutsche Sortierregeln, unabhängig von der Spracheinstellung des Rechners:
 // Groß-/Kleinschreibung egal, Umlaute wie im Wörterbuch (Ä bei A).
@@ -64,6 +65,7 @@ export class GameCollection {
       lastPlayed: game.details.lastPlayed?.isoDate ?? null,
       genre: game.details.genres.main,
       secondaryGenres: [...game.details.genres.secondary],
+      shelfId: game.details.shelfId?.value ?? null,
       description: game.details.description,
     }))
   }
@@ -75,6 +77,11 @@ export class GameCollection {
 
   findById(id: GameId): Game | null {
     return this.games.find((game) => game.id.equals(id)) ?? null
+  }
+
+  // Alle Spiele, die in diesem Regal stehen, alphabetisch nach Namen
+  gamesOnShelf(shelfId: ShelfId): Game[] {
+    return this.sortedByName().filter((game) => game.details.shelfId?.equals(shelfId) ?? false)
   }
 
   // Gibt es den Namen schon bei einem anderen Spiel?
@@ -206,10 +213,19 @@ function detailsFromData(entry: GameData): Result<GameDetails> {
   const genres = GameGenres.create(entry.genre, entry.secondaryGenres)
   if (!genres.ok) return genres
 
+  // Hier wird nur geprüft, ob die ID gültig aussieht. Ob es das Regal gibt, weiß die Sammlung nicht.
+  let shelfId: ShelfId | null = null
+  if (entry.shelfId !== null) {
+    const result = ShelfId.fromString(entry.shelfId)
+    if (!result.ok) return fail(`Das Regal hat keine gültige ID (${entry.shelfId}).`)
+    shelfId = result.value
+  }
+
   return ok({
     playTime,
     lastPlayed,
     genres: genres.value,
+    shelfId,
     description: cleanDescription(entry.description),
   })
 }

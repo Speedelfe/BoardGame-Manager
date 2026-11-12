@@ -20,6 +20,7 @@ interface StoredGame {
   lastPlayed: string | null
   genre: string | null
   secondaryGenres: string[]
+  shelfId: string | null
   description: string | null
 }
 
@@ -63,6 +64,7 @@ export class JsonFileGameRepository implements GameRepository {
       lastPlayed: game.lastPlayed,
       genre: game.genre,
       secondaryGenres: game.secondaryGenres,
+      shelfId: game.shelfId,
       description: game.description,
     }))
     await writeListToJsonFile(this.dataPath, 'gameList', gameList)
@@ -100,7 +102,7 @@ function readGameList(content: unknown): Result<GameData[]> {
 
     // Freiwillige Angaben: Fehlt ein Feld (oder ist es null), gilt es als nicht ausgefüllt
     const field = (fieldName: string) => `${position}: Das Feld "${fieldName}"`
-    const { playTimeMin, playTimeMax, lastPlayed, genre, description } = entry
+    const { playTimeMin, playTimeMax, lastPlayed, genre, shelfId, description } = entry
     const secondaryGenres = entry['secondaryGenres'] ?? []
     const playTimeOpenEnded = entry['playTimeOpenEnded'] ?? false
 
@@ -111,6 +113,7 @@ function readGameList(content: unknown): Result<GameData[]> {
     }
     if (!isTextOrMissing(lastPlayed)) return fail(`${field('lastPlayed')} ist kein Text.`)
     if (!isTextOrMissing(genre)) return fail(`${field('genre')} ist kein Text.`)
+    if (!isTextOrMissing(shelfId)) return fail(`${field('shelfId')} ist kein Text.`)
     if (!isTextOrMissing(description)) return fail(`${field('description')} ist kein Text.`)
     if (!isTextList(secondaryGenres)) {
       return fail(`${field('secondaryGenres')} ist keine Liste von Texten.`)
@@ -126,6 +129,7 @@ function readGameList(content: unknown): Result<GameData[]> {
       lastPlayed: lastPlayed ?? null,
       genre: genre ?? null,
       secondaryGenres,
+      shelfId: shelfId ?? null,
       description: description ?? null,
     })
   }

@@ -164,6 +164,7 @@ describe('Fehler beim Laden', () => {
     ['playTimeOpenEnded', 'ja'],
     ['lastPlayed', 20261112],
     ['genre', 3],
+    ['shelfId', 7],
     ['secondaryGenres', 'card'],
     ['secondaryGenres', [1, 2]],
     ['description', true],

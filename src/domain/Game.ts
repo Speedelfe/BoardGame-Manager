@@ -4,12 +4,16 @@ import type { GameName } from './GameName'
 import type { LastPlayed } from './LastPlayed'
 import type { PlayerCount } from './PlayerCount'
 import type { PlayTime } from './PlayTime'
+import type { ShelfId } from './ShelfId'
 
 // Die freiwilligen Angaben zu einem Spiel. null bedeutet: nicht ausgefüllt.
 export interface GameDetails {
   playTime: PlayTime | null
   lastPlayed: LastPlayed | null
   genres: GameGenres
+  // Das Regal, in dem das Spiel steht. Gemerkt wird die ID des Regals, nicht sein Name:
+  // So muss das Spiel nicht angefasst werden, wenn das Regal umbenannt wird.
+  shelfId: ShelfId | null
   description: string | null
 }
 
@@ -18,6 +22,7 @@ export const noDetails: GameDetails = {
   playTime: null,
   lastPlayed: null,
   genres: GameGenres.none,
+  shelfId: null,
   description: null,
 }
 
@@ -55,5 +60,7 @@ export interface GameData {
   // Kürzel der Genres, siehe GameGenres
   genre: string | null
   secondaryGenres: string[]
+  // ID des Regals, in dem das Spiel steht
+  shelfId: string | null
   description: string | null
 }

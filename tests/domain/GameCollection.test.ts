@@ -9,6 +9,8 @@ import { PlayerCount } from '../../src/domain/PlayerCount'
 import {
   azul,
   azulData,
+  bueroShelf,
+  sofaShelf,
   collectionOf,
   dixit,
   dixitData,
@@ -82,6 +84,22 @@ describe('Ändern', () => {
 
   test('Ein unbekanntes Spiel kann nicht geändert werden', () => {
     expect(games.change(GameId.create(), name('Monopoly'), count(4)).ok).toBe(false)
+  })
+})
+
+describe('Spiele in einem Regal', () => {
+  test('Nur die Spiele dieses Regals, alphabetisch sortiert', () => {
+    const collection = collectionOf([
+      fluegelschlagData,
+      { ...dixitData, shelfId: bueroShelf.id.value },
+      { ...azulData, shelfId: sofaShelf.id.value },
+    ])
+    expect(names(collection.gamesOnShelf(sofaShelf.id))).toEqual(['Azul', 'Flügelschlag'])
+    expect(names(collection.gamesOnShelf(bueroShelf.id))).toEqual(['Dixit'])
+  })
+
+  test('Ein Regal ohne Spiele ergibt eine leere Liste', () => {
+    expect(games.gamesOnShelf(bueroShelf.id)).toEqual([])
   })
 })
 
@@ -207,6 +225,7 @@ describe('Gespeicherte Daten prüfen', () => {
     ],
     [{ lastPlayed: '2026-02-30' }, '"2026-02-30" ist kein gültiges Datum.'],
     [{ genre: 'quatsch' }, '"quatsch" ist kein bekanntes Genre.'],
+    [{ shelfId: 'abc' }, 'Das Regal hat keine gültige ID (abc).'],
     [{ genre: null, secondaryGenres: ['card'] }, 'Nebengenres gehen nur zusammen mit einem Genre.'],
     [{ genre: 'card', secondaryGenres: ['card'] }, 'Das Genre kann nicht zugleich Nebengenre sein.'],
   ])('Ungültige freiwillige Angabe %j wird mit dem Spielnamen gemeldet', (changes, expected) => {

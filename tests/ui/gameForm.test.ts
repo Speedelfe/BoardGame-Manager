@@ -14,7 +14,7 @@ import {
   withPlayTimeOpenEnded,
   withSecondaryGenreToggled,
 } from '../../src/ui/gameForm'
-import { azul, collectionOf, dixit, dixitData, fluegelschlag } from '../testData'
+import { azul, collectionOf, dixit, dixitData, fluegelschlag, sofaShelfData } from '../testData'
 
 // Die freiwilligen Felder, alle leer
 const noDetailInputs = {
@@ -24,6 +24,7 @@ const noDetailInputs = {
   lastPlayedInput: '',
   genreInput: '',
   secondaryGenresInput: [],
+  shelfIdInput: '',
   descriptionInput: '',
 }
 
@@ -58,6 +59,7 @@ describe('Formular', () => {
       lastPlayedInput: '2026-10-03',
       genreInput: 'engineBuilder',
       secondaryGenresInput: ['strategy', 'card'],
+      shelfIdInput: sofaShelfData.id,
       descriptionInput: 'Vögel sammeln.\nSchön ruhig.',
       error: null,
       editing: fluegelschlag,
@@ -176,6 +178,7 @@ describe('Ungespeicherte Eingaben erkennen', () => {
     { lastPlayedInput: '2026-10-04' },
     { genreInput: 'party' as const },
     { secondaryGenresInput: ['strategy' as const] },
+    { shelfIdInput: '' },
     { descriptionInput: 'Anders' },
   ])('Geänderte freiwillige Angabe %j zählt als Änderung', (changes) => {
     expect(formHasChanges({ ...formFromGame(fluegelschlag), ...changes })).toBe(true)

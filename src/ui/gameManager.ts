@@ -6,6 +6,7 @@ import type { Game } from '../domain/Game'
 import { GameCollection } from '../domain/GameCollection'
 import type { Genre } from '../domain/GameGenres'
 import type { GameRepository } from '../domain/GameRepository'
+import { ShelfCollection } from '../domain/ShelfCollection'
 import {
   emptyForm,
   formFromGame,
@@ -30,6 +31,8 @@ export type PendingAction = { kind: 'showDetail'; game: Game } | { kind: 'showNe
 // Der gesamte Stand der Oberfläche
 export interface State {
   collection: GameCollection
+  // Die Regale, in denen Spiele stehen können
+  shelves: ShelfCollection
   chosenGame: Game | null
   formOpen: boolean
   form: GameForm
@@ -43,6 +46,7 @@ export interface State {
 export function initialState(): State {
   return {
     collection: GameCollection.empty(),
+    shelves: ShelfCollection.empty(),
     chosenGame: null,
     formOpen: false,
     form: emptyForm(),
@@ -204,7 +208,7 @@ export function createGameManager(repository: GameRepository, startState: State 
   }
 
   async function saveForm(): Promise<void> {
-    const { loadError, collection, form } = state.value
+    const { loadError, collection, shelves, form } = state.value
 
     if (loadError !== null) {
       setFormError(
@@ -213,7 +217,7 @@ export function createGameManager(repository: GameRepository, startState: State 
       return
     }
 
-    const saved = await saveGame(repository, collection, {
+    const saved = await saveGame(repository, collection, shelves, {
       editing: form.editing,
       name: form.nameInput,
       playerCount: form.playerCountInput,
@@ -223,6 +227,7 @@ export function createGameManager(repository: GameRepository, startState: State 
       lastPlayed: form.lastPlayedInput,
       genre: form.genreInput,
       secondaryGenres: form.secondaryGenresInput,
+      shelfId: form.shelfIdInput,
       description: form.descriptionInput,
     })
 

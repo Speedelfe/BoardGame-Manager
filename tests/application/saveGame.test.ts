@@ -16,6 +16,8 @@ import {
   games,
   MemoryGameRepository,
   names,
+  shelves,
+  sofaShelf,
 } from '../testData'
 
 // Die freiwilligen Angaben, alle leer gelassen
@@ -26,20 +28,21 @@ const noDetailsInput = {
   lastPlayed: '',
   genre: '',
   secondaryGenres: [],
+  shelfId: '',
   description: '',
 }
 
 // Neues Spiel mit diesen Eingaben speichern
 const saveNew = (repository: GameRepository, name: string, playerCount: string) =>
-  saveGame(repository, games, { ...noDetailsInput, editing: null, name, playerCount })
+  saveGame(repository, games, shelves, { ...noDetailsInput, editing: null, name, playerCount })
 
 // Vorhandenes Spiel mit geänderten Eingaben speichern
 const saveEdited = (repository: GameRepository, game: Game, name: string, playerCount: string) =>
-  saveGame(repository, games, { ...noDetailsInput, editing: game, name, playerCount })
+  saveGame(repository, games, shelves, { ...noDetailsInput, editing: game, name, playerCount })
 
 // Neues Spiel "Monopoly" mit diesen freiwilligen Angaben speichern
 const saveWithDetails = (details: Partial<GameInput>) =>
-  saveGame(new MemoryGameRepository(), games, {
+  saveGame(new MemoryGameRepository(), games, shelves, {
     ...noDetailsInput,
     editing: null,
     name: 'Monopoly',
@@ -128,6 +131,20 @@ describe('Freiwillige Angaben speichern', () => {
     expect(game.details.description).toBe('Dauert ewig.')
   })
 
+  test('Das gewählte Regal wird übernommen', async () => {
+    const { game } = expectOk(await saveWithDetails({ shelfId: sofaShelf.id.value }))
+    expect(game.details.shelfId?.equals(sofaShelf.id)).toBe(true)
+  })
+
+  test.each(['cccccccc-cccc-cccc-cccc-cccccccccccc', 'quatsch'])(
+    'Ein Regal, das es nicht gibt ("%s"), wird abgelehnt',
+    async (shelfId) => {
+      expect(expectError(await saveWithDetails({ shelfId }))).toBe(
+        'Das gewählte Regal gibt es nicht mehr.',
+      )
+    },
+  )
+
   test('Spieldauer nach oben offen wird übernommen', async () => {
     const { game } = expectOk(await saveWithDetails({ playTimeMin: '60', playTimeOpenEnded: true }))
     expect(game.details.playTime?.text).toBe('ab 60 Minuten')
@@ -147,7 +164,7 @@ describe('Freiwillige Angaben speichern', () => {
 
   test('Beim Bearbeiten ersetzen die neuen Angaben die alten', async () => {
     const { game } = expectOk(
-      await saveGame(new MemoryGameRepository(), games, {
+      await saveGame(new MemoryGameRepository(), games, shelves, {
         ...noDetailsInput,
         editing: fluegelschlag,
         name: 'Flügelschlag',

@@ -6,6 +6,8 @@ import type { Game, GameData } from '../src/domain/Game'
 import { GameCollection } from '../src/domain/GameCollection'
 import type { GameRepository } from '../src/domain/GameRepository'
 import { ok, type Result } from '../src/domain/Result'
+import type { Shelf, ShelfData } from '../src/domain/Shelf'
+import { ShelfCollection } from '../src/domain/ShelfCollection'
 
 // Die freiwilligen Angaben eines Spiels, alle nicht ausgefüllt
 export const noDetailsData = {
@@ -15,11 +17,24 @@ export const noDetailsData = {
   lastPlayed: null,
   genre: null,
   secondaryGenres: [],
+  shelfId: null,
   description: null,
 }
 
+// Zwei Regale mit festen IDs
+export const sofaShelfData: ShelfData = {
+  id: 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa',
+  name: 'Sofaschrank',
+}
+
+export const bueroShelfData: ShelfData = {
+  id: 'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb',
+  name: 'Büroregal',
+}
+
 // Feste IDs, damit man sie in Tests und Fehlermeldungen wiedererkennt.
-// Dixit hat keine freiwilligen Angaben, Azul nur eine einzelne Spieldauer, Flügelschlag alle.
+// Dixit hat keine freiwilligen Angaben, Azul nur eine einzelne Spieldauer, Flügelschlag alle
+// (es steht im Sofaschrank).
 export const dixitData: GameData = {
   ...noDetailsData,
   id: '11111111-1111-1111-1111-111111111111',
@@ -45,6 +60,7 @@ export const fluegelschlagData: GameData = {
   lastPlayed: '2026-10-03',
   genre: 'engineBuilder',
   secondaryGenres: ['strategy', 'card'],
+  shelfId: sofaShelfData.id,
   description: 'Vögel sammeln.\nSchön ruhig.',
 }
 
@@ -74,6 +90,10 @@ export function collectionOf(data: GameData[]): GameCollection {
 // Die drei Beispielspiele als Sammlung und einzeln
 export const games = collectionOf(gamesData)
 export const [dixit, azul, fluegelschlag] = games.games as [Game, Game, Game]
+
+// Die beiden Beispielregale als Sammlung und einzeln
+export const shelves = expectOk(ShelfCollection.restore([sofaShelfData, bueroShelfData]))
+export const [sofaShelf, bueroShelf] = shelves.shelves as [Shelf, Shelf]
 
 // Nur die Namen, damit Vergleiche gut lesbar sind
 export function names(gameList: readonly Game[]): string[] {

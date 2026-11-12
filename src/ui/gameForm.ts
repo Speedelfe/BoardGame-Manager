@@ -18,6 +18,8 @@ export interface GameForm {
   genreInput: Genre | ''
   // Kürzel der Nebengenres, immer in der Reihenfolge der Auswahlliste
   secondaryGenresInput: readonly Genre[]
+  // ID des gewählten Regals, leer = kein Regal
+  shelfIdInput: string
   descriptionInput: string
   error: string | null
   // null = neues Spiel anlegen, sonst das Spiel, das bearbeitet wird (so wie es vorher war)
@@ -35,6 +37,7 @@ export function emptyForm(): GameForm {
     lastPlayedInput: '',
     genreInput: '',
     secondaryGenresInput: [],
+    shelfIdInput: '',
     descriptionInput: '',
     error: null,
     editing: null,
@@ -43,7 +46,7 @@ export function emptyForm(): GameForm {
 
 // Formular mit den Daten eines vorhandenen Spiels, zum Bearbeiten
 export function formFromGame(game: Game): GameForm {
-  const { playTime, lastPlayed, genres: gameGenres, description } = game.details
+  const { playTime, lastPlayed, genres: gameGenres, shelfId, description } = game.details
 
   return {
     nameInput: game.name.text,
@@ -54,6 +57,7 @@ export function formFromGame(game: Game): GameForm {
     lastPlayedInput: lastPlayed?.isoDate ?? '',
     genreInput: gameGenres.main ?? '',
     secondaryGenresInput: gameGenres.secondary,
+    shelfIdInput: shelfId?.value ?? '',
     descriptionInput: description ?? '',
     error: null,
     editing: game,
@@ -74,6 +78,7 @@ export function formHasChanges(form: GameForm): boolean {
     form.lastPlayedInput !== original.lastPlayedInput ||
     form.genreInput !== original.genreInput ||
     form.secondaryGenresInput.join() !== original.secondaryGenresInput.join() ||
+    form.shelfIdInput !== original.shelfIdInput ||
     form.descriptionInput !== original.descriptionInput
   )
 }
