@@ -215,6 +215,22 @@ describe('Gespeicherte Daten prüfen', () => {
     expect(message).toBe(`Diese Spiele haben eine ungültige Spieleranzahl: "Azul" (${shown})`)
   })
 
+  test('Der Spielmodus bleibt erhalten, auch wenn er fehlt', () => {
+    const data = [
+      { ...dixitData, gameMode: 'cooperative' },
+      { ...azulData, gameMode: 'competitive' },
+      { ...fluegelschlagData, gameMode: null },
+    ]
+    const restored = expectOk(GameCollection.restore(data))
+
+    expect(restored.games.map((game) => game.details.mode)).toEqual([
+      'cooperative',
+      'competitive',
+      null,
+    ])
+    expect(restored.toData()).toEqual(data)
+  })
+
   test('Spieleranzahl von-bis und nach oben offen bleiben erhalten', () => {
     const data = [
       { ...dixitData, playerCountMin: 2, playerCountMax: 5 },
@@ -253,6 +269,7 @@ describe('Gespeicherte Daten prüfen', () => {
     ],
     [{ lastPlayed: '2026-02-30' }, '"2026-02-30" ist kein gültiges Datum.'],
     [{ genre: 'quatsch' }, '"quatsch" ist kein bekanntes Genre.'],
+    [{ gameMode: 'quatsch' }, '"quatsch" ist kein bekannter Spielmodus.'],
     [{ shelfId: 'abc' }, 'Das Regal hat keine gültige ID (abc).'],
     [{ genre: null, secondaryGenres: ['card'] }, 'Nebengenres gehen nur zusammen mit einem Genre.'],
     [{ genre: 'card', secondaryGenres: ['card'] }, 'Das Genre kann nicht zugleich Nebengenre sein.'],

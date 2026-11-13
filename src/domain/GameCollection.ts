@@ -1,6 +1,7 @@
 import { cleanDescription, Game, noDetails, type GameData, type GameDetails } from './Game'
 import { GameGenres } from './GameGenres'
 import { GameId } from './GameId'
+import { gameModeFromText } from './GameMode'
 import { GameName } from './GameName'
 import type { GameSearch } from './GameSearch'
 import { LastPlayed } from './LastPlayed'
@@ -68,6 +69,7 @@ export class GameCollection {
       lastPlayed: game.details.lastPlayed?.isoDate ?? null,
       genre: game.details.genres.main,
       secondaryGenres: [...game.details.genres.secondary],
+      gameMode: game.details.mode,
       shelfId: game.details.shelfId?.value ?? null,
       description: game.details.description,
     }))
@@ -252,6 +254,9 @@ function detailsFromData(entry: GameData): Result<GameDetails> {
   const genres = GameGenres.create(entry.genre, entry.secondaryGenres)
   if (!genres.ok) return genres
 
+  const mode = gameModeFromText(entry.gameMode)
+  if (!mode.ok) return mode
+
   // Hier wird nur geprüft, ob die ID gültig aussieht. Ob es das Regal gibt, weiß die Sammlung nicht.
   let shelfId: ShelfId | null = null
   if (entry.shelfId !== null) {
@@ -264,6 +269,7 @@ function detailsFromData(entry: GameData): Result<GameDetails> {
     playTime,
     lastPlayed,
     genres: genres.value,
+    mode: mode.value,
     shelfId,
     description: cleanDescription(entry.description),
   })

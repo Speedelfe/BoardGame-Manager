@@ -18,6 +18,7 @@ export const noDetailsData = {
   lastPlayed: null,
   genre: null,
   secondaryGenres: [],
+  gameMode: null,
   shelfId: null,
   description: null,
 }
@@ -67,6 +68,7 @@ export const fluegelschlagData: GameData = {
   lastPlayed: '2026-10-03',
   genre: 'engineBuilder',
   secondaryGenres: ['strategy', 'card'],
+  gameMode: 'competitive',
   shelfId: sofaShelfData.id,
   description: 'Vögel sammeln.\nSchön ruhig.',
 }

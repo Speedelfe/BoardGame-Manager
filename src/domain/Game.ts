@@ -1,5 +1,6 @@
 import { GameGenres } from './GameGenres'
 import type { GameId } from './GameId'
+import type { GameMode } from './GameMode'
 import type { GameName } from './GameName'
 import type { LastPlayed } from './LastPlayed'
 import type { PlayerCount } from './PlayerCount'
@@ -11,6 +12,8 @@ export interface GameDetails {
   playTime: PlayTime | null
   lastPlayed: LastPlayed | null
   genres: GameGenres
+  // Kooperativ oder kompetitiv
+  mode: GameMode | null
   // Das Regal, in dem das Spiel steht. Gemerkt wird die ID des Regals, nicht sein Name:
   // So muss das Spiel nicht angefasst werden, wenn das Regal umbenannt wird.
   shelfId: ShelfId | null
@@ -22,6 +25,7 @@ export const noDetails: GameDetails = {
   playTime: null,
   lastPlayed: null,
   genres: GameGenres.none,
+  mode: null,
   shelfId: null,
   description: null,
 }
@@ -64,6 +68,8 @@ export interface GameData {
   // Kürzel der Genres, siehe GameGenres
   genre: string | null
   secondaryGenres: string[]
+  // Kürzel des Spielmodus, siehe GameMode
+  gameMode: string | null
   // ID des Regals, in dem das Spiel steht
   shelfId: string | null
   description: string | null

@@ -79,6 +79,17 @@ describe('Laden und Speichern', () => {
       expect(await loadData(path)).toEqual(data)
     }))
 
+  test('Der Spielmodus wird genauso wieder geladen', () =>
+    withTestFolder(async (folder) => {
+      const path = join(folder, 'games.json')
+      const data = [
+        { ...dixitData, gameMode: 'cooperative' },
+        { ...azulData, gameMode: 'competitive' },
+      ]
+      await new JsonFileGameRepository(path).save(collectionOf(data))
+      expect(await loadData(path)).toEqual(data)
+    }))
+
   test('Speichern legt einen fehlenden Ordner an', () =>
     withTestFolder(async (folder) => {
       const path = join(folder, 'data', 'games.json')
@@ -224,6 +235,7 @@ describe('Fehler beim Laden', () => {
     ['playTimeOpenEnded', 'ja'],
     ['lastPlayed', 20261112],
     ['genre', 3],
+    ['gameMode', true],
     ['shelfId', 7],
     ['secondaryGenres', 'card'],
     ['secondaryGenres', [1, 2]],

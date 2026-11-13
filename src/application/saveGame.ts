@@ -79,6 +79,8 @@ export async function saveGame(
     playTime: playTime.value,
     lastPlayed: lastPlayed.value,
     genres: genres.value,
+    // Das Formular kennt den Spielmodus noch nicht: Ein bearbeitetes Spiel behält seinen.
+    mode: input.editing?.details.mode ?? null,
     shelfId: shelfId.value,
     description: cleanDescription(input.description),
   }

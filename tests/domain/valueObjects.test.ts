@@ -1,8 +1,9 @@
-// Tests für die Value Objects: Spieleranzahl, Spieldauer, Datum, Genres, Name und ID
+// Tests für die Value Objects: Spieleranzahl, Spieldauer, Datum, Genres, Spielmodus, Name und ID
 import { describe, expect, test } from 'vitest'
 
 import { GameGenres, genreNames, genres } from '../../src/domain/GameGenres'
 import { GameId } from '../../src/domain/GameId'
+import { gameModeFromText, gameModeNames, gameModes } from '../../src/domain/GameMode'
 import { GameName } from '../../src/domain/GameName'
 import { LastPlayed, todayIsoDate } from '../../src/domain/LastPlayed'
 import { PlayerCount } from '../../src/domain/PlayerCount'
@@ -232,6 +233,25 @@ describe('Genres', () => {
     ['card', ['quatsch'], '"quatsch" ist kein bekanntes Genre.'],
   ])('Ungültige Auswahl (%s, %j) wird abgelehnt', (main, secondary, expected) => {
     expect(expectError(GameGenres.create(main, secondary))).toBe(expected)
+  })
+})
+
+describe('Spielmodus', () => {
+  test('Bekannte Kürzel werden angenommen', () => {
+    expect(expectOk(gameModeFromText('cooperative'))).toBe('cooperative')
+    expect(expectOk(gameModeFromText('competitive'))).toBe('competitive')
+  })
+
+  test('Ohne Angabe gibt es keinen Spielmodus', () => {
+    expect(expectOk(gameModeFromText(null))).toBeNull()
+  })
+
+  test.each(['quatsch', '', 'Kooperativ'])('Unbekanntes Kürzel "%s" wird abgelehnt', (text) => {
+    expect(expectError(gameModeFromText(text))).toBe(`"${text}" ist kein bekannter Spielmodus.`)
+  })
+
+  test('Jeder Spielmodus hat einen Namen für die Anzeige', () => {
+    expect(gameModes.map((mode) => gameModeNames[mode])).toEqual(['Kooperativ', 'Kompetitiv'])
   })
 })
 
