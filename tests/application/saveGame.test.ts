@@ -28,6 +28,7 @@ const noDetailsInput = {
   lastPlayed: '',
   genre: '',
   secondaryGenres: [],
+  gameMode: '',
   shelfId: '',
   description: '',
 }
@@ -177,6 +178,7 @@ describe('Freiwillige Angaben speichern', () => {
         lastPlayed: '2025-12-24',
         genre: 'dice',
         secondaryGenres: ['party', 'strategy'],
+        gameMode: 'cooperative',
         description: '  Dauert ewig.  ',
       }),
     )
@@ -184,6 +186,7 @@ describe('Freiwillige Angaben speichern', () => {
     expect(game.details.lastPlayed?.text).toBe('24.12.2025')
     expect(game.details.genres.main).toBe('dice')
     expect(game.details.genres.secondary).toEqual(['strategy', 'party'])
+    expect(game.details.mode).toBe('cooperative')
     expect(game.details.description).toBe('Dauert ewig.')
   })
 
@@ -214,6 +217,7 @@ describe('Freiwillige Angaben speichern', () => {
     [{ lastPlayed: '9999-01-01' }, '"Zuletzt gespielt" darf nicht in der Zukunft liegen.'],
     [{ secondaryGenres: ['card'] }, 'Nebengenres gehen nur zusammen mit einem Genre.'],
     [{ genre: 'card', secondaryGenres: ['card'] }, 'Das Genre kann nicht zugleich Nebengenre sein.'],
+    [{ gameMode: 'quatsch' }, '"quatsch" ist kein bekannter Spielmodus.'],
   ])('Ungültige Angabe %j wird abgelehnt', async (details, expected) => {
     expect(expectError(await saveWithDetails(details))).toBe(expected)
   })
@@ -231,6 +235,7 @@ describe('Freiwillige Angaben speichern', () => {
     expect(game.details.playTime?.text).toBe('50 Minuten')
     expect(game.details.lastPlayed).toBeNull()
     expect(game.details.genres.main).toBeNull()
+    expect(game.details.mode).toBeNull()
     expect(game.details.description).toBeNull()
   })
 })

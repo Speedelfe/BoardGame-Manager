@@ -1,6 +1,7 @@
 import { cleanDescription, type Game, type GameDetails } from '../domain/Game'
 import type { ChangedCollection, GameCollection } from '../domain/GameCollection'
 import { GameGenres } from '../domain/GameGenres'
+import { gameModeFromText } from '../domain/GameMode'
 import { GameName } from '../domain/GameName'
 import type { GameRepository } from '../domain/GameRepository'
 import { LastPlayed } from '../domain/LastPlayed'
@@ -27,6 +28,8 @@ export interface GameInput {
   lastPlayed: string
   genre: string
   secondaryGenres: readonly string[]
+  // Kürzel des Spielmodus
+  gameMode: string
   // ID des gewählten Regals
   shelfId: string
   description: string
@@ -72,6 +75,9 @@ export async function saveGame(
   const genres = GameGenres.create(input.genre === '' ? null : input.genre, input.secondaryGenres)
   if (!genres.ok) return genres
 
+  const mode = gameModeFromText(input.gameMode === '' ? null : input.gameMode)
+  if (!mode.ok) return mode
+
   const shelfId = chosenShelfId(shelves, input.shelfId)
   if (!shelfId.ok) return shelfId
 
@@ -79,8 +85,7 @@ export async function saveGame(
     playTime: playTime.value,
     lastPlayed: lastPlayed.value,
     genres: genres.value,
-    // Das Formular kennt den Spielmodus noch nicht: Ein bearbeitetes Spiel behält seinen.
-    mode: input.editing?.details.mode ?? null,
+    mode: mode.value,
     shelfId: shelfId.value,
     description: cleanDescription(input.description),
   }

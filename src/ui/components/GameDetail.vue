@@ -3,6 +3,7 @@ import { computed } from 'vue'
 
 import type { Game } from '../../domain/Game'
 import { genreNames } from '../../domain/GameGenres'
+import { gameModeNames } from '../../domain/GameMode'
 import { todayIsoDate } from '../../domain/LastPlayed'
 import type { DeleteState } from '../gameManager'
 
@@ -18,23 +19,24 @@ const empty = '–'
 
 // Die freiwilligen Angaben als Text für die Anzeige
 const info = computed(() => {
-  const { playTime, lastPlayed, genres, description } = props.game.details
+  const { playTime, lastPlayed, genres, mode, description } = props.game.details
 
   return {
     playTime: playTime?.text ?? empty,
     genre: genres.main === null ? empty : genreNames[genres.main],
     secondaryGenres: genres.secondary.map((genre) => genreNames[genre]).join(', ') || empty,
+    mode: mode === null ? empty : gameModeNames[mode],
     shelf: props.shelfName ?? empty,
     lastPlayed: lastPlayed?.text ?? empty,
     description: description ?? empty,
   }
 })
 
-// Die Knöpfe schicken nur Ereignisse, nicht das Spiel selbst:
-// Der Programmablauf weiß, welches Spiel gerade ausgewählt ist.
 // Steht bei "zuletzt gespielt" schon der heutige Tag? Dann ist "Heute gespielt" ausgegraut.
 const playedToday = computed(() => props.game.details.lastPlayed?.isoDate === todayIsoDate())
 
+// Die Knöpfe schicken nur Ereignisse, nicht das Spiel selbst:
+// Der Programmablauf weiß, welches Spiel gerade ausgewählt ist.
 defineEmits<{
   playedToday: []
   edit: []
@@ -52,6 +54,7 @@ defineEmits<{
       <p>Spieldauer: {{ info.playTime }}</p>
       <p>Genre: {{ info.genre }}</p>
       <p>Nebengenres: {{ info.secondaryGenres }}</p>
+      <p>Spielmodus: {{ info.mode }}</p>
       <p>Regal: {{ info.shelf }}</p>
       <p>Zuletzt gespielt: {{ info.lastPlayed }}</p>
       <!-- Zeilenumbrüche der Beschreibung bleiben erhalten (siehe style.css) -->

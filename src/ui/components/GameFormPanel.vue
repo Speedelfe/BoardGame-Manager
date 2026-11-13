@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { genreNames, genres, type Genre } from '../../domain/GameGenres'
+import { gameModeNames, gameModes, type GameMode } from '../../domain/GameMode'
 import { todayIsoDate } from '../../domain/LastPlayed'
 import type { Shelf } from '../../domain/Shelf'
 import {
@@ -30,6 +31,7 @@ const emit = defineEmits<{
   changeLastPlayed: [text: string]
   changeGenre: [text: string]
   toggleSecondaryGenre: [genre: Genre]
+  toggleGameMode: [mode: GameMode]
   changeShelf: [shelfId: string]
   changeDescription: [text: string]
   save: []
@@ -153,6 +155,20 @@ function isChecked(event: Event): boolean {
           @change="emit('toggleSecondaryGenre', genre)"
         />
         {{ genreNames[genre] }}
+      </label>
+    </fieldset>
+
+    <!-- Ein Spiel hat höchstens einen Spielmodus:
+         Wird einer angekreuzt, verschwindet das Häkchen beim anderen. -->
+    <fieldset class="genre-checks">
+      <legend>Spielmodus (freiwillig)</legend>
+      <label v-for="mode in gameModes" :key="mode">
+        <input
+          type="checkbox"
+          :checked="form.gameModeInput === mode"
+          @change="emit('toggleGameMode', mode)"
+        />
+        {{ gameModeNames[mode] }}
       </label>
     </fieldset>
 

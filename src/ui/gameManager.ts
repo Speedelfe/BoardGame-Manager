@@ -7,6 +7,7 @@ import { saveGame } from '../application/saveGame'
 import type { Game } from '../domain/Game'
 import { GameCollection } from '../domain/GameCollection'
 import type { Genre } from '../domain/GameGenres'
+import type { GameMode } from '../domain/GameMode'
 import type { GameRepository } from '../domain/GameRepository'
 import { ShelfCollection } from '../domain/ShelfCollection'
 import type { ShelfRepository } from '../domain/ShelfRepository'
@@ -15,6 +16,7 @@ import {
   emptyForm,
   formFromGame,
   formHasChanges,
+  withGameModeToggled,
   withGenre,
   withPlayerCountMin,
   withPlayerCountOpenEnded,
@@ -294,6 +296,11 @@ export function createGameManager(repositories: Repositories, startState: State 
     changeForm(withSecondaryGenreToggled(state.value.form, genre))
   }
 
+  // Häkchen bei einem Spielmodus setzen oder wegnehmen. Es ist immer höchstens einer angekreuzt.
+  function toggleGameMode(mode: GameMode): void {
+    changeForm(withGameModeToggled(state.value.form, mode))
+  }
+
   // Regal auswählen. Der Text ist die ID des Regals, leer = kein Regal.
   function changeShelf(shelfId: string): void {
     changeForm({ ...state.value.form, shelfIdInput: shelfId })
@@ -335,6 +342,7 @@ export function createGameManager(repositories: Repositories, startState: State 
       lastPlayed: form.lastPlayedInput,
       genre: form.genreInput,
       secondaryGenres: form.secondaryGenresInput,
+      gameMode: form.gameModeInput,
       shelfId: form.shelfIdInput,
       description: form.descriptionInput,
     })
@@ -437,6 +445,7 @@ export function createGameManager(repositories: Repositories, startState: State 
     changeLastPlayed,
     changeGenre,
     toggleSecondaryGenre,
+    toggleGameMode,
     changeShelf,
     changeDescription,
     cancelForm,

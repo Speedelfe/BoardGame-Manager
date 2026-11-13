@@ -124,6 +124,7 @@ const foundGames = computed<FoundGame[]>(() => {
       @change-last-played="manager.changeLastPlayed($event)"
       @change-genre="manager.changeGenre($event)"
       @toggle-secondary-genre="manager.toggleSecondaryGenre($event)"
+      @toggle-game-mode="manager.toggleGameMode($event)"
       @change-shelf="manager.changeShelf($event)"
       @change-description="manager.changeDescription($event)"
       @save="manager.saveForm()"

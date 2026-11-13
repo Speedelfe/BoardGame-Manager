@@ -1,5 +1,6 @@
 import type { Game } from '../domain/Game'
 import { genres, isGenre, type Genre } from '../domain/GameGenres'
+import type { GameMode } from '../domain/GameMode'
 
 // Was gerade im Formular (neues Spiel oder Spiel bearbeiten) eingetippt ist.
 // Alles bleibt erst einmal Text. Geprüft wird beim Speichern (siehe application/saveGame).
@@ -22,6 +23,8 @@ export interface GameForm {
   genreInput: Genre | ''
   // Kürzel der Nebengenres, immer in der Reihenfolge der Auswahlliste
   secondaryGenresInput: readonly Genre[]
+  // Kürzel des Spielmodus (kooperativ oder kompetitiv), leer = keine Angabe
+  gameModeInput: GameMode | ''
   // ID des gewählten Regals, leer = kein Regal
   shelfIdInput: string
   descriptionInput: string
@@ -43,6 +46,7 @@ export function emptyForm(): GameForm {
     lastPlayedInput: '',
     genreInput: '',
     secondaryGenresInput: [],
+    gameModeInput: '',
     shelfIdInput: '',
     descriptionInput: '',
     error: null,
@@ -52,7 +56,7 @@ export function emptyForm(): GameForm {
 
 // Formular mit den Daten eines vorhandenen Spiels, zum Bearbeiten
 export function formFromGame(game: Game): GameForm {
-  const { playTime, lastPlayed, genres: gameGenres, shelfId, description } = game.details
+  const { playTime, lastPlayed, genres: gameGenres, mode, shelfId, description } = game.details
 
   return {
     nameInput: game.name.text,
@@ -65,6 +69,7 @@ export function formFromGame(game: Game): GameForm {
     lastPlayedInput: lastPlayed?.isoDate ?? '',
     genreInput: gameGenres.main ?? '',
     secondaryGenresInput: gameGenres.secondary,
+    gameModeInput: mode ?? '',
     shelfIdInput: shelfId?.value ?? '',
     descriptionInput: description ?? '',
     error: null,
@@ -88,6 +93,7 @@ export function formHasChanges(form: GameForm): boolean {
     form.lastPlayedInput !== original.lastPlayedInput ||
     form.genreInput !== original.genreInput ||
     form.secondaryGenresInput.join() !== original.secondaryGenresInput.join() ||
+    form.gameModeInput !== original.gameModeInput ||
     form.shelfIdInput !== original.shelfIdInput ||
     form.descriptionInput !== original.descriptionInput
   )
@@ -185,4 +191,11 @@ export function withSecondaryGenreToggled(form: GameForm, genre: Genre): GameFor
 
   // In die Reihenfolge der Auswahlliste bringen, egal in welcher Reihenfolge geklickt wurde
   return { ...form, secondaryGenresInput: genres.filter((other) => chosen.includes(other)) }
+}
+
+// Häkchen bei einem Spielmodus setzen oder wegnehmen.
+// Ein Spiel hat höchstens einen Spielmodus: Wird einer angekreuzt, verschwindet das Häkchen
+// beim anderen. Ein Klick auf den angekreuzten nimmt das Häkchen weg (keine Angabe).
+export function withGameModeToggled(form: GameForm, mode: GameMode): GameForm {
+  return { ...form, gameModeInput: form.gameModeInput === mode ? '' : mode }
 }

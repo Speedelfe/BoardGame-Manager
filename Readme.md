@@ -13,7 +13,7 @@ weiter erreichbar.
 
 - Spiele mit Name und Spieleranzahl (eine Zahl, von-bis oder nach oben offen) anlegen, bearbeiten und löschen
 - Freiwillig zu jedem Spiel: Spieldauer in Minuten (eine Zahl, von-bis oder nach oben offen), Genre und Nebengenres,
-  das Regal, zuletzt gespielt und eine Beschreibung
+  der Spielmodus (kooperativ oder kompetitiv), das Regal, zuletzt gespielt und eine Beschreibung
 - Mit dem Knopf „Heute gespielt“ bei einem Spiel „zuletzt gespielt“ auf heute setzen
 - Regale (Schrankplätze) anlegen, umbenennen und löschen und sehen, welche Spiele darin stehen
 - Alle Spiele in einer alphabetisch sortierten Liste anzeigen

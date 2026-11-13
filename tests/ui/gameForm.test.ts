@@ -11,6 +11,7 @@ import {
   emptyForm,
   formFromGame,
   formHasChanges,
+  withGameModeToggled,
   withGenre,
   withPlayerCountMin,
   withPlayerCountOpenEnded,
@@ -30,6 +31,7 @@ const noDetailInputs = {
   lastPlayedInput: '',
   genreInput: '',
   secondaryGenresInput: [],
+  gameModeInput: '',
   shelfIdInput: '',
   descriptionInput: '',
 }
@@ -67,6 +69,7 @@ describe('Formular', () => {
       lastPlayedInput: '2026-10-03',
       genreInput: 'engineBuilder',
       secondaryGenresInput: ['strategy', 'card'],
+      gameModeInput: 'competitive',
       shelfIdInput: sofaShelfData.id,
       descriptionInput: 'Vögel sammeln.\nSchön ruhig.',
       error: null,
@@ -219,6 +222,32 @@ describe('Genres im Formular', () => {
   })
 })
 
+describe('Spielmodus im Formular', () => {
+  test('Ohne Angabe ist kein Spielmodus angekreuzt', () => {
+    expect(emptyForm().gameModeInput).toBe('')
+    expect(formFromGame(dixit).gameModeInput).toBe('')
+  })
+
+  test('Der Spielmodus des Spiels ist angekreuzt', () => {
+    // Flügelschlag ist kompetitiv
+    expect(formFromGame(fluegelschlag).gameModeInput).toBe('competitive')
+  })
+
+  test('Ein Häkchen setzt den Spielmodus', () => {
+    expect(withGameModeToggled(emptyForm(), 'cooperative').gameModeInput).toBe('cooperative')
+  })
+
+  test('Wird der andere Spielmodus angekreuzt, verschwindet das erste Häkchen', () => {
+    const cooperative = withGameModeToggled(emptyForm(), 'cooperative')
+    expect(withGameModeToggled(cooperative, 'competitive').gameModeInput).toBe('competitive')
+  })
+
+  test('Ein Klick auf den angekreuzten Spielmodus nimmt das Häkchen weg', () => {
+    const cooperative = withGameModeToggled(emptyForm(), 'cooperative')
+    expect(withGameModeToggled(cooperative, 'cooperative').gameModeInput).toBe('')
+  })
+})
+
 describe('Ungespeicherte Eingaben erkennen', () => {
   test('Frisch geöffnetes Formular hat keine Änderungen', () => {
     expect(formHasChanges(emptyForm())).toBe(false)
@@ -244,6 +273,8 @@ describe('Ungespeicherte Eingaben erkennen', () => {
     { playTimeOpenEndedInput: true },
     { lastPlayedInput: '2026-10-04' },
     { genreInput: 'party' as const },
+    { gameModeInput: 'cooperative' as const },
+    { gameModeInput: '' as const },
     { secondaryGenresInput: ['strategy' as const] },
     { shelfIdInput: '' },
     { descriptionInput: 'Anders' },
