@@ -1,6 +1,9 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 
+import type { Game } from '../domain/Game'
+import FindFormPanel from './components/FindFormPanel.vue'
+import FindResults, { type FoundGame } from './components/FindResults.vue'
 import GameDetail from './components/GameDetail.vue'
 import GameFormPanel from './components/GameFormPanel.vue'
 import GameList from './components/GameList.vue'
@@ -35,23 +38,42 @@ const chosenShelfGames = computed(() => {
   return shelf === null ? [] : state.value.collection.gamesOnShelf(shelf.id)
 })
 
-// Der Name des Regals, in dem das ausgewählte Spiel steht (null = kein Regal).
+// Der Name des Regals, in dem ein Spiel steht (null = kein Regal).
 // Er wird hier nachgeschlagen, weil das Spiel selbst nur die ID des Regals kennt.
-const chosenGameShelfName = computed(() => {
-  const shelfId = state.value.chosenGame?.details.shelfId ?? null
+function shelfNameOf(game: Game | null): string | null {
+  const shelfId = game?.details.shelfId ?? null
   if (shelfId === null) return null
 
   return state.value.shelves.findById(shelfId)?.name.text ?? null
+}
+
+const chosenGameShelfName = computed(() => shelfNameOf(state.value.chosenGame))
+
+// Der Stand der Ansicht "Spiel finden"
+const findView = computed(() => state.value.findView)
+
+// Die Spiele, die zur zuletzt gestarteten Suche passen, jedes mit dem Namen seines Regals.
+// Die Reihenfolge legt die Sammlung fest: das am längsten nicht gespielte zuerst.
+const foundGames = computed<FoundGame[]>(() => {
+  const search = findView.value.search
+  if (search === null) return []
+
+  return state.value.collection
+    .find(search)
+    .map((game) => ({ game, shelfName: shelfNameOf(game) }))
 })
 </script>
 
 <template>
   <!-- Menüleiste oben -->
   <header class="menu">
-    <!-- Wechsel zwischen den beiden Ansichten. Die gerade sichtbare ist hervorgehoben. -->
+    <!-- Wechsel zwischen den Ansichten. Die gerade sichtbare ist hervorgehoben. -->
     <button :class="{ active: state.view === 'games' }" @click="manager.showGames()">Spiele</button>
     <button :class="{ active: state.view === 'shelves' }" @click="manager.showShelves()">
       Regale
+    </button>
+    <button :class="{ active: state.view === 'find' }" @click="manager.showFind()">
+      Spiel finden
     </button>
 
     <!-- Nach einem Ladefehler ausgegraut, weil Speichern dann gesperrt ist -->
@@ -149,5 +171,17 @@ const chosenGameShelfName = computed(() => {
       @confirm-delete="manager.confirmDeleteShelf()"
       @cancel-delete="manager.cancelDeleteShelf()"
     />
+  </main>
+
+  <!-- Ansicht "Spiel finden": links das Suchformular, rechts die passenden Spiele -->
+  <main v-else class="content">
+    <FindFormPanel
+      :form="findView.form"
+      @change-players="manager.changeFindPlayers($event)"
+      @change-minutes="manager.changeFindMinutes($event)"
+      @toggle-genre="manager.toggleFindGenre($event)"
+      @find="manager.findGames()"
+    />
+    <FindResults :search="findView.search" :found="foundGames" />
   </main>
 </template>

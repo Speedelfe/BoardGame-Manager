@@ -16,6 +16,8 @@ weiter erreichbar.
   das Regal, zuletzt gespielt und eine Beschreibung
 - Regale (Schrankplätze) anlegen, umbenennen und löschen und sehen, welche Spiele darin stehen
 - Alle Spiele in einer alphabetisch sortierten Liste anzeigen
+- Ein passendes Spiel für eine Runde finden: nach Anzahl der Spieler, verfügbarer Zeit und Genres suchen.
+  Das am längsten nicht gespielte Spiel steht oben.
 - Die Sammlung automatisch in einer Datei speichern und beim Start wieder laden
 
 ## Wo die Sammlung gespeichert wird

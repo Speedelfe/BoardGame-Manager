@@ -208,8 +208,9 @@ textarea {
   min-width: 0;
 }
 
-/* Nebengenres: Häkchen in zwei Spalten */
-.secondary-genres {
+/* Nebengenres im Spiel-Formular und Genres im Suchformular: Häkchen in zwei Spalten */
+.secondary-genres,
+.genre-checks {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 4px 10px;
@@ -220,6 +221,7 @@ textarea {
 }
 
 .secondary-genres label,
+.genre-checks label,
 .checkbox-line {
   display: flex;
   align-items: center;
@@ -227,6 +229,7 @@ textarea {
 }
 
 .secondary-genres input,
+.genre-checks input,
 .checkbox-line input {
   margin: 0;
 }
@@ -240,4 +243,38 @@ textarea {
 
 .game-form p {
   margin: 0;
+}
+
+/* Ansicht "Spiel finden": die Ergebnisse rechts neben dem Suchformular */
+.find-results {
+  flex: 1;
+  min-width: 0;
+  margin: 10px;
+  overflow: auto;
+}
+
+.find-results p {
+  margin: 0 0 8px;
+}
+
+.find-results table {
+  border-collapse: collapse;
+  background: var(--surface);
+  border-radius: 4px;
+}
+
+.find-results th,
+.find-results td {
+  padding: 6px 12px;
+  text-align: left;
+  vertical-align: top;
+}
+
+.find-results th {
+  font-weight: normal;
+  border-bottom: 1px solid var(--border);
+}
+
+.find-results td {
+  overflow-wrap: anywhere;
 }
