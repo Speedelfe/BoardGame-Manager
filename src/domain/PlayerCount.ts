@@ -63,6 +63,15 @@ export class PlayerCount {
     return PlayerCount.fromNumbers(min.value, max.value, openEnded)
   }
 
+  // Kann man das Spiel mit so vielen Leuten spielen?
+  allows(players: number): boolean {
+    if (this.openEnded) {
+      return players >= this.min
+    }
+    // Ohne "bis" gilt genau die eine Zahl
+    return players >= this.min && players <= (this.max ?? this.min)
+  }
+
   // Für die Anzeige: "4 Spieler", "2–5 Spieler" oder "ab 4 Spieler"
   get text(): string {
     if (this.max !== null) {

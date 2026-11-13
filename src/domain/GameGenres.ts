@@ -61,4 +61,9 @@ export class GameGenres {
     const sorted = genres.filter((genre) => secondary.includes(genre))
     return ok(new GameGenres(main as Genre, sorted))
   }
+
+  // Ist mindestens eins dieser Genres das Genre oder ein Nebengenre?
+  hasAnyOf(wanted: readonly Genre[]): boolean {
+    return wanted.some((genre) => genre === this.main || this.secondary.includes(genre))
+  }
 }

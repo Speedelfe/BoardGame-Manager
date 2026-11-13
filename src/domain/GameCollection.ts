@@ -2,6 +2,7 @@ import { cleanDescription, Game, noDetails, type GameData, type GameDetails } fr
 import { GameGenres } from './GameGenres'
 import { GameId } from './GameId'
 import { GameName } from './GameName'
+import type { GameSearch } from './GameSearch'
 import { LastPlayed } from './LastPlayed'
 import { PlayerCount } from './PlayerCount'
 import { PlayTime } from './PlayTime'
@@ -84,6 +85,23 @@ export class GameCollection {
   // Alle Spiele, die in diesem Regal stehen, alphabetisch nach Namen
   gamesOnShelf(shelfId: ShelfId): Game[] {
     return this.sortedByName().filter((game) => game.details.shelfId?.equals(shelfId) ?? false)
+  }
+
+  // Alle Spiele, die zu dieser Suche passen.
+  // Reihenfolge: zuerst die Spiele ohne Datum bei "zuletzt gespielt", dann das am längsten
+  // nicht gespielte zuerst. Bei Gleichstand alphabetisch nach Namen.
+  find(search: GameSearch): Game[] {
+    // Bei der Form Jahr-Monat-Tag stimmt die Reihenfolge der Texte mit der der Tage überein.
+    // Ein leerer Text steht vor jedem Datum.
+    const lastPlayed = (game: Game) => game.details.lastPlayed?.isoDate ?? ''
+
+    // "sort" behält bei Gleichstand die bisherige (alphabetische) Reihenfolge
+    return this.sortedByName()
+      .filter((game) => search.matches(game))
+      .sort((a, b) => {
+        if (lastPlayed(a) === lastPlayed(b)) return 0
+        return lastPlayed(a) < lastPlayed(b) ? -1 : 1
+      })
   }
 
   // Gibt es den Namen schon bei einem anderen Spiel?

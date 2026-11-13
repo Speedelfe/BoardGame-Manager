@@ -70,6 +70,12 @@ export class PlayTime {
     return PlayTime.fromNumbers(min.value, max.value, openEnded)
   }
 
+  // Kann das Spiel in so viele Minuten passen?
+  // Es zählt die kürzeste Dauer ("von"): "30–60 Minuten" kann in 45 Minuten passen.
+  canFitInto(minutes: number): boolean {
+    return this.min <= minutes
+  }
+
   // Für die Anzeige: "45 Minuten", "30–60 Minuten" oder "ab 60 Minuten"
   get text(): string {
     if (this.max !== null) {
