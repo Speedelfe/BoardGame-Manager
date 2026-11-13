@@ -56,7 +56,7 @@ function isChecked(event: Event): boolean {
 
 <template>
   <!-- Enter in einem Eingabefeld speichert, außer während der Nachfrage -->
-  <form class="game-form" @submit.prevent="askDiscard || emit('save')">
+  <form class="game-form game-form-wide" @submit.prevent="askDiscard || emit('save')">
     <h2>
       {{
         form.editing === null
@@ -65,139 +65,146 @@ function isChecked(event: Event): boolean {
       }}
     </h2>
 
-    <label for="game-name">Spielname</label>
-    <input
-      id="game-name"
-      type="text"
-      placeholder="Spielname"
-      :value="form.nameInput"
-      @input="emit('changeName', textOf($event))"
-    />
-
-    <!-- "von" ist Pflicht. "von" allein ist eine einzelne Zahl, mit "bis" ein Bereich. -->
-    <label for="player-count-min">Spieleranzahl</label>
-    <div class="from-to">
-      <input
-        id="player-count-min"
-        type="text"
-        placeholder="von"
-        :value="form.playerCountMinInput"
-        @input="emit('changePlayerCountMin', textOf($event))"
-      />
-      <span>bis</span>
-      <!-- "bis" lässt sich erst ausfüllen, wenn "von" ausgefüllt ist -->
-      <input
-        type="text"
-        placeholder="bis"
-        aria-label="Spieleranzahl bis"
-        :disabled="!canEditPlayerCountMax(form)"
-        :value="form.playerCountMaxInput"
-        @input="emit('changePlayerCountMax', textOf($event))"
-      />
-    </div>
-    <!-- Für Spiele ohne feste Höchstzahl. Mit Häkchen gibt es kein "bis". -->
-    <label class="checkbox-line">
-      <input
-        type="checkbox"
-        :checked="form.playerCountOpenEndedInput"
-        :disabled="!canTogglePlayerCountOpenEnded(form)"
-        @change="emit('changePlayerCountOpenEnded', isChecked($event))"
-      />
-      nach oben offen (ab "von")
-    </label>
-
-    <!-- Ab hier ist alles freiwillig -->
-    <label for="play-time-min">Spieldauer in Minuten (freiwillig)</label>
-    <div class="from-to">
-      <input
-        id="play-time-min"
-        type="text"
-        placeholder="von"
-        :value="form.playTimeMinInput"
-        @input="emit('changePlayTimeMin', textOf($event))"
-      />
-      <span>bis</span>
-      <!-- "bis" lässt sich erst ausfüllen, wenn "von" ausgefüllt ist -->
-      <input
-        type="text"
-        placeholder="bis"
-        aria-label="Spieldauer bis"
-        :disabled="!canEditPlayTimeMax(form)"
-        :value="form.playTimeMaxInput"
-        @input="emit('changePlayTimeMax', textOf($event))"
-      />
-    </div>
-    <!-- Für Spiele, die beliebig lange dauern können. Mit Häkchen gibt es kein "bis". -->
-    <label class="checkbox-line">
-      <input
-        type="checkbox"
-        :checked="form.playTimeOpenEndedInput"
-        :disabled="!canTogglePlayTimeOpenEnded(form)"
-        @change="emit('changePlayTimeOpenEnded', isChecked($event))"
-      />
-      nach oben offen (ab "von")
-    </label>
-
-    <label for="genre">Genre (freiwillig)</label>
-    <select id="genre" :value="form.genreInput" @change="emit('changeGenre', textOf($event))">
-      <option value="">kein Genre</option>
-      <option v-for="genre in genres" :key="genre" :value="genre">{{ genreNames[genre] }}</option>
-    </select>
-
-    <!-- Nebengenres gehen nur mit einem Genre, und das Genre selbst ist ausgegraut -->
-    <fieldset class="secondary-genres">
-      <legend>Nebengenres (freiwillig)</legend>
-      <label v-for="genre in genres" :key="genre">
+    <!-- Zwei Spalten: links die Textfelder, rechts alle anderen Angaben -->
+    <div class="form-columns">
+      <div class="form-column form-column-text">
+        <label for="game-name">Spielname</label>
         <input
-          type="checkbox"
-          :checked="form.secondaryGenresInput.includes(genre)"
-          :disabled="!canToggleSecondaryGenre(form, genre)"
-          @change="emit('toggleSecondaryGenre', genre)"
+          id="game-name"
+          type="text"
+          placeholder="Spielname"
+          :value="form.nameInput"
+          @input="emit('changeName', textOf($event))"
         />
-        {{ genreNames[genre] }}
-      </label>
-    </fieldset>
 
-    <!-- Ein Spiel hat höchstens einen Spielmodus:
-         Wird einer angekreuzt, verschwindet das Häkchen beim anderen. -->
-    <fieldset class="genre-checks">
-      <legend>Spielmodus (freiwillig)</legend>
-      <label v-for="mode in gameModes" :key="mode">
+        <!-- Die Beschreibung füllt die Spalte bis unten aus (siehe style.css) -->
+        <label for="description">Beschreibung (freiwillig)</label>
+        <textarea
+          id="description"
+          placeholder="Beschreibung"
+          :value="form.descriptionInput"
+          @input="emit('changeDescription', textOf($event))"
+        ></textarea>
+      </div>
+
+      <div class="form-column form-column-options">
+        <!-- "von" ist Pflicht. "von" allein ist eine einzelne Zahl, mit "bis" ein Bereich. -->
+        <label for="player-count-min">Spieleranzahl</label>
+        <div class="from-to">
+          <input
+            id="player-count-min"
+            type="text"
+            placeholder="von"
+            :value="form.playerCountMinInput"
+            @input="emit('changePlayerCountMin', textOf($event))"
+          />
+          <span>bis</span>
+          <!-- "bis" lässt sich erst ausfüllen, wenn "von" ausgefüllt ist -->
+          <input
+            type="text"
+            placeholder="bis"
+            aria-label="Spieleranzahl bis"
+            :disabled="!canEditPlayerCountMax(form)"
+            :value="form.playerCountMaxInput"
+            @input="emit('changePlayerCountMax', textOf($event))"
+          />
+        </div>
+        <!-- Für Spiele ohne feste Höchstzahl. Mit Häkchen gibt es kein "bis". -->
+        <label class="checkbox-line">
+          <input
+            type="checkbox"
+            :checked="form.playerCountOpenEndedInput"
+            :disabled="!canTogglePlayerCountOpenEnded(form)"
+            @change="emit('changePlayerCountOpenEnded', isChecked($event))"
+          />
+          nach oben offen (ab "von")
+        </label>
+
+        <!-- Ab hier ist alles freiwillig -->
+        <label for="play-time-min">Spieldauer in Minuten (freiwillig)</label>
+        <div class="from-to">
+          <input
+            id="play-time-min"
+            type="text"
+            placeholder="von"
+            :value="form.playTimeMinInput"
+            @input="emit('changePlayTimeMin', textOf($event))"
+          />
+          <span>bis</span>
+          <!-- "bis" lässt sich erst ausfüllen, wenn "von" ausgefüllt ist -->
+          <input
+            type="text"
+            placeholder="bis"
+            aria-label="Spieldauer bis"
+            :disabled="!canEditPlayTimeMax(form)"
+            :value="form.playTimeMaxInput"
+            @input="emit('changePlayTimeMax', textOf($event))"
+          />
+        </div>
+        <!-- Für Spiele, die beliebig lange dauern können. Mit Häkchen gibt es kein "bis". -->
+        <label class="checkbox-line">
+          <input
+            type="checkbox"
+            :checked="form.playTimeOpenEndedInput"
+            :disabled="!canTogglePlayTimeOpenEnded(form)"
+            @change="emit('changePlayTimeOpenEnded', isChecked($event))"
+          />
+          nach oben offen (ab "von")
+        </label>
+
+        <label for="genre">Genre (freiwillig)</label>
+        <select id="genre" :value="form.genreInput" @change="emit('changeGenre', textOf($event))">
+          <option value="">kein Genre</option>
+          <option v-for="genre in genres" :key="genre" :value="genre">{{ genreNames[genre] }}</option>
+        </select>
+
+        <!-- Nebengenres gehen nur mit einem Genre, und das Genre selbst ist ausgegraut -->
+        <fieldset class="secondary-genres">
+          <legend>Nebengenres (freiwillig)</legend>
+          <label v-for="genre in genres" :key="genre">
+            <input
+              type="checkbox"
+              :checked="form.secondaryGenresInput.includes(genre)"
+              :disabled="!canToggleSecondaryGenre(form, genre)"
+              @change="emit('toggleSecondaryGenre', genre)"
+            />
+            {{ genreNames[genre] }}
+          </label>
+        </fieldset>
+
+        <!-- Ein Spiel hat höchstens einen Spielmodus:
+             Wird einer angekreuzt, verschwindet das Häkchen beim anderen. -->
+        <fieldset class="genre-checks">
+          <legend>Spielmodus (freiwillig)</legend>
+          <label v-for="mode in gameModes" :key="mode">
+            <input
+              type="checkbox"
+              :checked="form.gameModeInput === mode"
+              @change="emit('toggleGameMode', mode)"
+            />
+            {{ gameModeNames[mode] }}
+          </label>
+        </fieldset>
+
+        <!-- Die Regale selbst pflegt man in der Ansicht "Regale" -->
+        <label for="shelf">Regal (freiwillig)</label>
+        <select id="shelf" :value="form.shelfIdInput" @change="emit('changeShelf', textOf($event))">
+          <option value="">kein Regal</option>
+          <option v-for="shelf in shelves" :key="shelf.id.value" :value="shelf.id.value">
+            {{ shelf.name.text }}
+          </option>
+        </select>
+
+        <label for="last-played">Zuletzt gespielt (freiwillig)</label>
         <input
-          type="checkbox"
-          :checked="form.gameModeInput === mode"
-          @change="emit('toggleGameMode', mode)"
+          id="last-played"
+          type="date"
+          :max="today"
+          :value="form.lastPlayedInput"
+          @input="emit('changeLastPlayed', textOf($event))"
         />
-        {{ gameModeNames[mode] }}
-      </label>
-    </fieldset>
-
-    <!-- Die Regale selbst pflegt man in der Ansicht "Regale" -->
-    <label for="shelf">Regal (freiwillig)</label>
-    <select id="shelf" :value="form.shelfIdInput" @change="emit('changeShelf', textOf($event))">
-      <option value="">kein Regal</option>
-      <option v-for="shelf in shelves" :key="shelf.id.value" :value="shelf.id.value">
-        {{ shelf.name.text }}
-      </option>
-    </select>
-
-    <label for="last-played">Zuletzt gespielt (freiwillig)</label>
-    <input
-      id="last-played"
-      type="date"
-      :max="today"
-      :value="form.lastPlayedInput"
-      @input="emit('changeLastPlayed', textOf($event))"
-    />
-
-    <label for="description">Beschreibung (freiwillig)</label>
-    <textarea
-      id="description"
-      rows="4"
-      placeholder="Beschreibung"
-      :value="form.descriptionInput"
-      @input="emit('changeDescription', textOf($event))"
-    ></textarea>
+      </div>
+    </div>
 
     <!-- Fehlermeldung nur anzeigen, wenn es eine gibt -->
     <p v-if="form.error !== null" class="error">{{ form.error }}</p>

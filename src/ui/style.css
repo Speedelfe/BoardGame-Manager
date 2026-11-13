@@ -196,6 +196,46 @@ textarea {
   overflow-y: auto;
 }
 
+/* Das Spiel-Formular nutzt die ganze Breite neben der Liste und hat zwei Spalten */
+.game-form-wide {
+  flex: 1;
+  width: auto;
+  min-width: 0;
+  max-width: 800px;
+}
+
+/* Die Spalten sind gleich hoch. Ist das Fenster zu schmal, rutscht die rechte unter die linke. */
+.form-columns {
+  display: flex;
+  flex: 1 0 auto;
+  flex-wrap: wrap;
+  gap: 5px 20px;
+}
+
+.form-column {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+/* Links die Textfelder: Die Spalte bekommt den Platz, den die rechte übrig lässt */
+.form-column-text {
+  flex: 1;
+  min-width: 240px;
+}
+
+/* Die Beschreibung reicht bis zum unteren Ende der Spalte */
+.form-column-text textarea {
+  flex: 1;
+  min-height: 120px;
+  resize: none;
+}
+
+/* Rechts alle anderen Angaben, so breit wie das Formular früher war */
+.form-column-options {
+  width: 300px;
+}
+
 /* Spieleranzahl und Spieldauer: "von" und "bis" nebeneinander */
 .from-to {
   display: flex;
