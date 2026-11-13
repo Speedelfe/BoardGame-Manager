@@ -9,6 +9,7 @@ import type { Genre } from '../domain/GameGenres'
 import type { GameRepository } from '../domain/GameRepository'
 import { ShelfCollection } from '../domain/ShelfCollection'
 import type { ShelfRepository } from '../domain/ShelfRepository'
+import { createFindActions, initialFindView, type FindViewState } from './findActions'
 import {
   emptyForm,
   formFromGame,
@@ -35,13 +36,16 @@ export type PendingAction =
   | { kind: 'showDetail'; game: Game }
   | { kind: 'showNewGame' }
   | { kind: 'showShelves' }
+  | { kind: 'showFind' }
 
 // Der gesamte Stand der Oberfläche
 export interface State {
-  // Welche Ansicht gerade zu sehen ist: die Spiele oder die Regale
-  view: 'games' | 'shelves'
+  // Welche Ansicht gerade zu sehen ist: die Spiele, die Regale oder die Suche "Spiel finden"
+  view: 'games' | 'shelves' | 'find'
   // Der Stand der Ansicht "Regale" (siehe shelfActions.ts)
   shelfView: ShelfViewState
+  // Der Stand der Ansicht "Spiel finden" (siehe findActions.ts)
+  findView: FindViewState
   collection: GameCollection
   // Die Regale, in denen Spiele stehen können
   shelves: ShelfCollection
@@ -59,6 +63,7 @@ export function initialState(): State {
   return {
     view: 'games',
     shelfView: initialShelfView(),
+    findView: initialFindView(),
     collection: GameCollection.empty(),
     shelves: ShelfCollection.empty(),
     chosenGame: null,
@@ -160,9 +165,17 @@ export function createGameManager(repositories: Repositories, startState: State 
       showDetail(pending.game)
     } else if (pending.kind === 'showNewGame') {
       showNewGame()
-    } else {
+    } else if (pending.kind === 'showShelves') {
       showShelves()
+    } else {
+      showFind()
     }
+  }
+
+  // Die Ansicht "Regale" in ihren Ruhezustand bringen:
+  // Ein offenes Regal-Formular wird geschlossen. Das ausgewählte Regal bleibt ausgewählt.
+  function closedShelfView(): ShelfViewState {
+    return { ...initialShelfView(), chosenShelf: state.value.shelfView.chosenShelf }
   }
 
   // Klick auf "Regale" in der Menüleiste: zur Ansicht mit den Regalen wechseln
@@ -182,11 +195,29 @@ export function createGameManager(repositories: Repositories, startState: State 
     })
   }
 
+  // Klick auf "Spiel finden" in der Menüleiste: zur Suche nach passenden Spielen wechseln.
+  // Die Eingaben und Ergebnisse der letzten Suche stehen noch da.
+  function showFind(): void {
+    // Ungespeicherte Eingaben im Spiel-Formular: erst nachfragen
+    if (hasUnsavedInput()) {
+      change({ pending: { kind: 'showFind' } })
+      return
+    }
+    // Offene Formulare für Spiele und Regale werden geschlossen. Die Auswahl bleibt jeweils.
+    change({
+      view: 'find',
+      shelfView: closedShelfView(),
+      formOpen: false,
+      form: emptyForm(),
+      deleteState: { kind: 'notAsked' },
+      pending: null,
+    })
+  }
+
   // Klick auf "Spiele" in der Menüleiste: zurück zur Ansicht mit den Spielen.
   // Ein offenes Regal-Formular wird dabei geschlossen. Das ausgewählte Regal bleibt ausgewählt.
   function showGames(): void {
-    const chosenShelf = state.value.shelfView.chosenShelf
-    change({ view: 'games', shelfView: { ...initialShelfView(), chosenShelf } })
+    change({ view: 'games', shelfView: closedShelfView() })
   }
 
   // Klick auf ein Spiel in der Ansicht "Regale": zu den Spielen wechseln und dieses Spiel anzeigen
@@ -380,8 +411,11 @@ export function createGameManager(repositories: Repositories, startState: State 
     confirmDelete,
     showShelves,
     showGames,
+    showFind,
     showGameFromShelf,
     // Alles, was man in der Ansicht "Regale" tun kann
     ...createShelfActions(state, shelfRepository),
+    // Alles, was man in der Ansicht "Spiel finden" tun kann
+    ...createFindActions(state),
   }
 }

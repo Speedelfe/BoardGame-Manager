@@ -64,7 +64,7 @@ const chosenGameShelfName = computed(() => {
       Neues Spiel
     </button>
     <button
-      v-else
+      v-else-if="state.view === 'shelves'"
       class="menu-new"
       :disabled="state.loadError !== null"
       @click="manager.showNewShelf()"
@@ -122,7 +122,7 @@ const chosenGameShelfName = computed(() => {
   </main>
 
   <!-- Ansicht "Regale", genauso aufgebaut -->
-  <main v-else class="content">
+  <main v-else-if="state.view === 'shelves'" class="content">
     <!-- Liste der Regale, links -->
     <ShelfList
       :shelves="shelves"
