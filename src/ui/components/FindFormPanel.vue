@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { genreNames, genres, type Genre } from '../../domain/GameGenres'
+import { gameModeNames, gameModes, type GameMode } from '../../domain/GameMode'
 import type { FindForm } from '../findActions'
 
 defineProps<{
@@ -10,6 +11,7 @@ const emit = defineEmits<{
   changePlayers: [text: string]
   changeMinutes: [text: string]
   toggleGenre: [genre: Genre]
+  toggleMode: [mode: GameMode]
   find: []
 }>()
 
@@ -53,6 +55,19 @@ function textOf(event: Event): string {
           @change="emit('toggleGenre', genre)"
         />
         {{ genreNames[genre] }}
+      </label>
+    </fieldset>
+
+    <!-- Anders als am Spiel dürfen hier beide angekreuzt sein. Dann passt jeder Spielmodus. -->
+    <fieldset class="genre-checks">
+      <legend>Spielmodus (freiwillig)</legend>
+      <label v-for="mode in gameModes" :key="mode">
+        <input
+          type="checkbox"
+          :checked="form.modesInput.includes(mode)"
+          @change="emit('toggleMode', mode)"
+        />
+        {{ gameModeNames[mode] }}
       </label>
     </fieldset>
 

@@ -182,6 +182,7 @@ const foundGames = computed<FoundGame[]>(() => {
       @change-players="manager.changeFindPlayers($event)"
       @change-minutes="manager.changeFindMinutes($event)"
       @toggle-genre="manager.toggleFindGenre($event)"
+      @toggle-mode="manager.toggleFindMode($event)"
       @find="manager.findGames()"
     />
     <FindResults :search="findView.search" :found="foundGames" />

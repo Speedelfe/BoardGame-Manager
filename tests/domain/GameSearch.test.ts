@@ -18,19 +18,24 @@ import {
 // - Dixit: 3 Spieler, keine freiwilligen Angaben
 // - Azul: 4 Spieler, 45 Minuten
 // - Flügelschlag: 1–5 Spieler, 40–70 Minuten, Enginebuilder (dazu Strategie und Karten),
-//   zuletzt gespielt am 03.10.2026
+//   kompetitiv, zuletzt gespielt am 03.10.2026
 
 // Suche aus Eingaben, wie sie im Suchformular stehen
-const search = (players: string, minutes: string, genres: string[] = []) =>
-  expectOk(GameSearch.fromInput(players, minutes, genres))
+const search = (players: string, minutes: string, genres: string[] = [], modes: string[] = []) =>
+  expectOk(GameSearch.fromInput(players, minutes, genres, modes))
 
 // Die Namen der gefundenen Beispielspiele, in der Reihenfolge der Ergebnisliste
 const found = (players: string, minutes: string, genres: string[] = []) =>
   names(games.find(search(players, minutes, genres)))
 
 // Die Namen der Spiele einer eigenen Sammlung, die zur Suche passen
-const foundIn = (data: GameData[], players: string, minutes: string, genres: string[] = []) =>
-  names(collectionOf(data).find(search(players, minutes, genres)))
+const foundIn = (
+  data: GameData[],
+  players: string,
+  minutes: string,
+  genres: string[] = [],
+  modes: string[] = [],
+) => names(collectionOf(data).find(search(players, minutes, genres, modes)))
 
 describe('Suche aus Eingaben', () => {
   test('Ohne Eingaben ist nichts eingeschränkt', () => {
@@ -59,7 +64,7 @@ describe('Suche aus Eingaben', () => {
     ['', '1441', [], 'Die Spieldauer darf höchstens 1440 Minuten sein.'],
     ['', '', ['quatsch'], '"quatsch" ist kein bekanntes Genre.'],
   ])('Ungültige Eingabe ("%s", "%s", %j) wird abgelehnt', (players, minutes, genres, expected) => {
-    expect(expectError(GameSearch.fromInput(players, minutes, genres))).toBe(expected)
+    expect(expectError(GameSearch.fromInput(players, minutes, genres, []))).toBe(expected)
   })
 })
 
@@ -130,6 +135,49 @@ describe('Suche nach Genres', () => {
 
   test('Ein Spiel ohne Genre wird trotzdem gefunden', () => {
     expect(foundIn([dixitData], '', '', ['card'])).toEqual(['Dixit'])
+  })
+})
+
+describe('Suche nach Spielmodus', () => {
+  // Ein kooperatives, ein kompetitives und ein Spiel ohne Spielmodus
+  const data = [
+    { ...dixitData, gameMode: 'cooperative' },
+    { ...azulData, gameMode: 'competitive' },
+    { ...fluegelschlagData, gameMode: null, lastPlayed: null },
+  ]
+  const foundModes = (modes: string[]) =>
+    names(collectionOf(data).find(search('', '', [], modes)))
+
+  test('Spielmodi stehen in der Reihenfolge der Anzeige, keiner doppelt', () => {
+    const both = search('', '', [], ['competitive', 'cooperative', 'competitive'])
+    expect(both.modes).toEqual(['cooperative', 'competitive'])
+  })
+
+  test('Ohne Häkchen ist der Spielmodus egal', () => {
+    expect(search('', '').modes).toEqual([])
+    expect(foundModes([])).toEqual(['Azul', 'Dixit', 'Flügelschlag'])
+  })
+
+  test('Ein Häkchen findet nur diesen Spielmodus und Spiele ohne Angabe', () => {
+    expect(foundModes(['cooperative'])).toEqual(['Dixit', 'Flügelschlag'])
+    expect(foundModes(['competitive'])).toEqual(['Azul', 'Flügelschlag'])
+  })
+
+  test('Mit beiden Häkchen passt jeder Spielmodus', () => {
+    expect(foundModes(['cooperative', 'competitive'])).toEqual(['Azul', 'Dixit', 'Flügelschlag'])
+  })
+
+  test('Ein unbekannter Spielmodus wird abgelehnt', () => {
+    expect(expectError(GameSearch.fromInput('', '', [], ['quatsch']))).toBe(
+      '"quatsch" ist kein bekannter Spielmodus.',
+    )
+  })
+
+  test('Der Spielmodus gilt zusammen mit den anderen Angaben', () => {
+    // Flügelschlag aus den Beispielspielen: 1–5 Spieler, kompetitiv
+    expect(foundIn([fluegelschlagData], '4', '', [], ['competitive'])).toEqual(['Flügelschlag'])
+    expect(foundIn([fluegelschlagData], '4', '', [], ['cooperative'])).toEqual([])
+    expect(foundIn([fluegelschlagData], '6', '', [], ['competitive'])).toEqual([])
   })
 })
 

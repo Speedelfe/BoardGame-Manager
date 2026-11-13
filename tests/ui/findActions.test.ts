@@ -17,7 +17,7 @@ import {
 // Programmablauf mit den drei Beispielspielen und den zwei Beispielregalen:
 // - Dixit: 3 Spieler, keine freiwilligen Angaben
 // - Azul: 4 Spieler, 45 Minuten
-// - Flügelschlag: 1–5 Spieler, 40–70 Minuten, Enginebuilder (dazu Strategie und Karten)
+// - Flügelschlag: 1–5 Spieler, 40–70 Minuten, Enginebuilder (dazu Strategie und Karten), kompetitiv
 function managerWith(changes: Partial<State> = {}) {
   return createGameManager(
     { games: new MemoryGameRepository(games), shelves: new MemoryShelfRepository(shelves) },
@@ -134,6 +134,16 @@ describe('Suchformular ausfüllen', () => {
     expect(manager.state.value.findView.form.genresInput).toEqual(['party'])
   })
 
+  test('Spielmodi an- und abwählen: beide dürfen angekreuzt sein', () => {
+    const manager = managerWith()
+    manager.toggleFindMode('competitive')
+    manager.toggleFindMode('cooperative')
+    expect(manager.state.value.findView.form.modesInput).toEqual(['cooperative', 'competitive'])
+
+    manager.toggleFindMode('cooperative')
+    expect(manager.state.value.findView.form.modesInput).toEqual(['competitive'])
+  })
+
   test('Vor dem Klick auf "Suchen" gibt es keine Ergebnisse', () => {
     const manager = managerWith()
     manager.changeFindPlayers('4')
@@ -157,6 +167,16 @@ describe('Suchen', () => {
 
     expect(manager.state.value.findView.form.error).toBeNull()
     expect(foundNames(manager.state.value)).toEqual(['Flügelschlag'])
+  })
+
+  test('Der Spielmodus schränkt die Ergebnisse ein', () => {
+    // Flügelschlag ist kompetitiv, Azul und Dixit haben keinen Spielmodus
+    const manager = managerWith()
+    manager.toggleFindMode('cooperative')
+    manager.findGames()
+
+    expect(manager.state.value.findView.search?.modes).toEqual(['cooperative'])
+    expect(foundNames(manager.state.value)).toEqual(['Azul', 'Dixit'])
   })
 
   test('Passt kein Spiel, ist die Ergebnisliste leer', () => {

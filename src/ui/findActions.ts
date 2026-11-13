@@ -1,6 +1,7 @@
 import type { ShallowRef } from 'vue'
 
 import { genres, type Genre } from '../domain/GameGenres'
+import { gameModes, type GameMode } from '../domain/GameMode'
 import { GameSearch } from '../domain/GameSearch'
 import type { State } from './gameManager'
 
@@ -13,6 +14,9 @@ export interface FindForm {
   minutesInput: string
   // Kürzel der angekreuzten Genres, immer in der Reihenfolge der Auswahlliste. Leer = egal.
   genresInput: readonly Genre[]
+  // Kürzel der angekreuzten Spielmodi, immer in der Reihenfolge der Anzeige. Leer = egal.
+  // Anders als am Spiel dürfen hier beide angekreuzt sein.
+  modesInput: readonly GameMode[]
   error: string | null
 }
 
@@ -26,7 +30,7 @@ export interface FindViewState {
 }
 
 export function emptyFindForm(): FindForm {
-  return { playersInput: '', minutesInput: '', genresInput: [], error: null }
+  return { playersInput: '', minutesInput: '', genresInput: [], modesInput: [], error: null }
 }
 
 export function initialFindView(): FindViewState {
@@ -67,11 +71,27 @@ export function createFindActions(state: ShallowRef<State>) {
     changeForm({ genresInput: genres.filter((other) => chosen.includes(other)) })
   }
 
+  // Häkchen bei einem Spielmodus setzen oder wegnehmen
+  function toggleFindMode(mode: GameMode): void {
+    const before = state.value.findView.form.modesInput
+    const chosen = before.includes(mode)
+      ? before.filter((other) => other !== mode)
+      : [...before, mode]
+
+    // In die Reihenfolge der Anzeige bringen, egal in welcher Reihenfolge geklickt wurde
+    changeForm({ modesInput: gameModes.filter((other) => chosen.includes(other)) })
+  }
+
   // Klick auf "Suchen": Eingaben prüfen und die Suche merken.
   // Bei einer ungültigen Eingabe gibt es eine Fehlermeldung und keine Ergebnisliste.
   function findGames(): void {
     const form = state.value.findView.form
-    const search = GameSearch.fromInput(form.playersInput, form.minutesInput, form.genresInput)
+    const search = GameSearch.fromInput(
+      form.playersInput,
+      form.minutesInput,
+      form.genresInput,
+      form.modesInput,
+    )
 
     if (!search.ok) {
       change({ form: { ...form, error: search.error }, search: null })
@@ -84,6 +104,7 @@ export function createFindActions(state: ShallowRef<State>) {
     changeFindPlayers,
     changeFindMinutes,
     toggleFindGenre,
+    toggleFindMode,
     findGames,
   }
 }

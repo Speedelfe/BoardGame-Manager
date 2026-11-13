@@ -17,7 +17,7 @@ weiter erreichbar.
 - Mit dem Knopf „Heute gespielt“ bei einem Spiel „zuletzt gespielt“ auf heute setzen
 - Regale (Schrankplätze) anlegen, umbenennen und löschen und sehen, welche Spiele darin stehen
 - Alle Spiele in einer alphabetisch sortierten Liste anzeigen
-- Ein passendes Spiel für eine Runde finden: nach Anzahl der Spieler, verfügbarer Zeit und Genres suchen.
+- Ein passendes Spiel für eine Runde finden: nach Anzahl der Spieler, verfügbarer Zeit, Genres und Spielmodus suchen.
   Das am längsten nicht gespielte Spiel steht oben.
 - Die Sammlung automatisch in einer Datei speichern und beim Start wieder laden
 

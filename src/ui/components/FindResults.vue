@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import type { Game } from '../../domain/Game'
 import { genreNames } from '../../domain/GameGenres'
+import { gameModeNames } from '../../domain/GameMode'
 import type { GameSearch } from '../../domain/GameSearch'
 
 // Ein gefundenes Spiel mit dem Namen seines Regals (null = kein Regal).
@@ -27,6 +28,12 @@ function genresText(game: Game): string {
 
   return [main, ...secondary].map((genre) => genreNames[genre]).join(', ')
 }
+
+// Der Spielmodus eines Spiels als Text
+function modeText(game: Game): string {
+  const mode = game.details.mode
+  return mode === null ? empty : gameModeNames[mode]
+}
 </script>
 
 <template>
@@ -50,6 +57,7 @@ function genresText(game: Game): string {
             <th v-if="search.players !== null">Spieleranzahl</th>
             <th v-if="search.minutes !== null">Spieldauer</th>
             <th v-if="search.genres.length > 0">Genres</th>
+            <th v-if="search.modes.length > 0">Spielmodus</th>
           </tr>
         </thead>
         <tbody>
@@ -60,6 +68,7 @@ function genresText(game: Game): string {
             <td v-if="search.players !== null">{{ game.playerCount.text }}</td>
             <td v-if="search.minutes !== null">{{ game.details.playTime?.text ?? empty }}</td>
             <td v-if="search.genres.length > 0">{{ genresText(game) }}</td>
+            <td v-if="search.modes.length > 0">{{ modeText(game) }}</td>
           </tr>
         </tbody>
       </table>
