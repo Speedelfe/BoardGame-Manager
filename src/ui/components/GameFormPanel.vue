@@ -3,7 +3,9 @@ import { genreNames, genres, type Genre } from '../../domain/GameGenres'
 import { todayIsoDate } from '../../domain/LastPlayed'
 import type { Shelf } from '../../domain/Shelf'
 import {
+  canEditPlayerCountMax,
   canEditPlayTimeMax,
+  canTogglePlayerCountOpenEnded,
   canTogglePlayTimeOpenEnded,
   canToggleSecondaryGenre,
   type GameForm,
@@ -19,7 +21,9 @@ defineProps<{
 
 const emit = defineEmits<{
   changeName: [text: string]
-  changePlayerCount: [text: string]
+  changePlayerCountMin: [text: string]
+  changePlayerCountMax: [text: string]
+  changePlayerCountOpenEnded: [openEnded: boolean]
   changePlayTimeMin: [text: string]
   changePlayTimeMax: [text: string]
   changePlayTimeOpenEnded: [openEnded: boolean]
@@ -68,18 +72,41 @@ function isChecked(event: Event): boolean {
       @input="emit('changeName', textOf($event))"
     />
 
-    <label for="player-count">Spieleranzahl</label>
-    <input
-      id="player-count"
-      type="text"
-      placeholder="Spieleranzahl"
-      :value="form.playerCountInput"
-      @input="emit('changePlayerCount', textOf($event))"
-    />
+    <!-- "von" ist Pflicht. "von" allein ist eine einzelne Zahl, mit "bis" ein Bereich. -->
+    <label for="player-count-min">Spieleranzahl</label>
+    <div class="from-to">
+      <input
+        id="player-count-min"
+        type="text"
+        placeholder="von"
+        :value="form.playerCountMinInput"
+        @input="emit('changePlayerCountMin', textOf($event))"
+      />
+      <span>bis</span>
+      <!-- "bis" lässt sich erst ausfüllen, wenn "von" ausgefüllt ist -->
+      <input
+        type="text"
+        placeholder="bis"
+        aria-label="Spieleranzahl bis"
+        :disabled="!canEditPlayerCountMax(form)"
+        :value="form.playerCountMaxInput"
+        @input="emit('changePlayerCountMax', textOf($event))"
+      />
+    </div>
+    <!-- Für Spiele ohne feste Höchstzahl. Mit Häkchen gibt es kein "bis". -->
+    <label class="checkbox-line">
+      <input
+        type="checkbox"
+        :checked="form.playerCountOpenEndedInput"
+        :disabled="!canTogglePlayerCountOpenEnded(form)"
+        @change="emit('changePlayerCountOpenEnded', isChecked($event))"
+      />
+      nach oben offen (ab "von")
+    </label>
 
     <!-- Ab hier ist alles freiwillig -->
     <label for="play-time-min">Spieldauer in Minuten (freiwillig)</label>
-    <div class="play-time">
+    <div class="from-to">
       <input
         id="play-time-min"
         type="text"

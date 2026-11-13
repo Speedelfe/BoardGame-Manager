@@ -14,6 +14,8 @@ import {
   formFromGame,
   formHasChanges,
   withGenre,
+  withPlayerCountMin,
+  withPlayerCountOpenEnded,
   withPlayTimeMin,
   withPlayTimeOpenEnded,
   withSecondaryGenreToggled,
@@ -216,8 +218,18 @@ export function createGameManager(repositories: Repositories, startState: State 
     changeForm({ ...state.value.form, nameInput: text })
   }
 
-  function changePlayerCount(text: string): void {
-    changeForm({ ...state.value.form, playerCountInput: text })
+  // Spieleranzahl "von". Wird sie geleert, wird auch "bis" geleert.
+  function changePlayerCountMin(text: string): void {
+    changeForm(withPlayerCountMin(state.value.form, text))
+  }
+
+  function changePlayerCountMax(text: string): void {
+    changeForm({ ...state.value.form, playerCountMaxInput: text })
+  }
+
+  // Häkchen "nach oben offen" bei der Spieleranzahl. Mit Häkchen wird "bis" geleert.
+  function changePlayerCountOpenEnded(openEnded: boolean): void {
+    changeForm(withPlayerCountOpenEnded(state.value.form, openEnded))
   }
 
   // Spieldauer "von". Wird sie geleert, wird auch "bis" geleert.
@@ -280,7 +292,9 @@ export function createGameManager(repositories: Repositories, startState: State 
     const saved = await saveGame(repository, collection, shelves, {
       editing: form.editing,
       name: form.nameInput,
-      playerCount: form.playerCountInput,
+      playerCountMin: form.playerCountMinInput,
+      playerCountMax: form.playerCountMaxInput,
+      playerCountOpenEnded: form.playerCountOpenEndedInput,
       playTimeMin: form.playTimeMinInput,
       playTimeMax: form.playTimeMaxInput,
       playTimeOpenEnded: form.playTimeOpenEndedInput,
@@ -348,7 +362,9 @@ export function createGameManager(repositories: Repositories, startState: State 
     cancelDiscard,
     editChosenGame,
     changeName,
-    changePlayerCount,
+    changePlayerCountMin,
+    changePlayerCountMax,
+    changePlayerCountOpenEnded,
     changePlayTimeMin,
     changePlayTimeMax,
     changePlayTimeOpenEnded,

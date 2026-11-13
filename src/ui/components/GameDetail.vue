@@ -43,7 +43,7 @@ defineEmits<{
   <section class="detail">
     <div class="detail-info">
       <h1>{{ game.name.text }}</h1>
-      <p>Spieler: {{ game.playerCount.min }}</p>
+      <p>Spieleranzahl: {{ game.playerCount.text }}</p>
       <p>Spieldauer: {{ info.playTime }}</p>
       <p>Genre: {{ info.genre }}</p>
       <p>Nebengenres: {{ info.secondaryGenres }}</p>

@@ -15,7 +15,10 @@ export interface GameInput {
   // null = neues Spiel anlegen, sonst das Spiel, das bearbeitet wird
   editing: Game | null
   name: string
-  playerCount: string
+  // Spieleranzahl: "von" ist Pflicht, "bis" und das Häkchen "nach oben offen" sind freiwillig
+  playerCountMin: string
+  playerCountMax: string
+  playerCountOpenEnded: boolean
   // Die freiwilligen Angaben. Leerer Text (bzw. leere Liste) bedeutet: nicht ausgefüllt.
   playTimeMin: string
   playTimeMax: string
@@ -49,7 +52,11 @@ export async function saveGame(
     return fail(`Das Spiel "${name.value.text}" gibt es schon.`)
   }
 
-  const playerCount = PlayerCount.fromInput(input.playerCount)
+  const playerCount = PlayerCount.fromInput(
+    input.playerCountMin,
+    input.playerCountMax,
+    input.playerCountOpenEnded,
+  )
   if (!playerCount.ok) return playerCount
 
   const playTime = PlayTime.fromInput(

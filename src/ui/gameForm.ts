@@ -6,7 +6,11 @@ import { genres, isGenre, type Genre } from '../domain/GameGenres'
 // Nur Name und Spieleranzahl sind Pflicht, alles andere darf leer bleiben.
 export interface GameForm {
   nameInput: string
-  playerCountInput: string
+  // Spieleranzahl: "von" allein ist eine einzelne Zahl, mit "bis" ein Bereich
+  playerCountMinInput: string
+  playerCountMaxInput: string
+  // Häkchen "nach oben offen": Es gibt keine feste Höchstzahl, dann gibt es kein "bis"
+  playerCountOpenEndedInput: boolean
   // Spieldauer in Minuten: "von" allein ist eine einzelne Zahl, mit "bis" ein Bereich
   playTimeMinInput: string
   playTimeMaxInput: string
@@ -30,7 +34,9 @@ export interface GameForm {
 export function emptyForm(): GameForm {
   return {
     nameInput: '',
-    playerCountInput: '',
+    playerCountMinInput: '',
+    playerCountMaxInput: '',
+    playerCountOpenEndedInput: false,
     playTimeMinInput: '',
     playTimeMaxInput: '',
     playTimeOpenEndedInput: false,
@@ -50,7 +56,9 @@ export function formFromGame(game: Game): GameForm {
 
   return {
     nameInput: game.name.text,
-    playerCountInput: String(game.playerCount.min),
+    playerCountMinInput: String(game.playerCount.min),
+    playerCountMaxInput: game.playerCount.max === null ? '' : String(game.playerCount.max),
+    playerCountOpenEndedInput: game.playerCount.openEnded,
     playTimeMinInput: playTime === null ? '' : String(playTime.min),
     playTimeMaxInput: playTime === null || playTime.max === null ? '' : String(playTime.max),
     playTimeOpenEndedInput: playTime?.openEnded ?? false,
@@ -71,7 +79,9 @@ export function formHasChanges(form: GameForm): boolean {
 
   return (
     form.nameInput !== original.nameInput ||
-    form.playerCountInput !== original.playerCountInput ||
+    form.playerCountMinInput !== original.playerCountMinInput ||
+    form.playerCountMaxInput !== original.playerCountMaxInput ||
+    form.playerCountOpenEndedInput !== original.playerCountOpenEndedInput ||
     form.playTimeMinInput !== original.playTimeMinInput ||
     form.playTimeMaxInput !== original.playTimeMaxInput ||
     form.playTimeOpenEndedInput !== original.playTimeOpenEndedInput ||
@@ -84,6 +94,41 @@ export function formHasChanges(form: GameForm): boolean {
 }
 
 // ----- Eingaben, die andere Felder mit verändern -----
+
+// Spieleranzahl "von" eintippen. "bis" und "nach oben offen" gibt es nur zusammen mit "von":
+// Wird "von" geleert, werden auch sie geleert.
+export function withPlayerCountMin(form: GameForm, text: string): GameForm {
+  if (text.trim() === '') {
+    return {
+      ...form,
+      playerCountMinInput: text,
+      playerCountMaxInput: '',
+      playerCountOpenEndedInput: false,
+    }
+  }
+  return { ...form, playerCountMinInput: text }
+}
+
+// Kann man das Häkchen "nach oben offen" gerade setzen? Nur wenn "von" schon ausgefüllt ist.
+export function canTogglePlayerCountOpenEnded(form: GameForm): boolean {
+  return form.playerCountMinInput.trim() !== ''
+}
+
+// Kann man "bis" gerade ausfüllen? Nur wenn "von" ausgefüllt und die Spieleranzahl nicht nach oben offen ist.
+export function canEditPlayerCountMax(form: GameForm): boolean {
+  return canTogglePlayerCountOpenEnded(form) && !form.playerCountOpenEndedInput
+}
+
+// Häkchen "nach oben offen" setzen oder wegnehmen. Mit Häkchen gibt es kein "bis", es wird geleert.
+export function withPlayerCountOpenEnded(form: GameForm, openEnded: boolean): GameForm {
+  if (!canTogglePlayerCountOpenEnded(form)) return form
+
+  return {
+    ...form,
+    playerCountOpenEndedInput: openEnded,
+    playerCountMaxInput: openEnded ? '' : form.playerCountMaxInput,
+  }
+}
 
 // Spieldauer "von" eintippen. "bis" und "nach oben offen" gibt es nur zusammen mit "von":
 // Wird "von" geleert, werden auch sie geleert.

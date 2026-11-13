@@ -43,7 +43,7 @@ export class PlayerCount {
 
   // Spieleranzahl aus den Eingaben im Formular: die beiden Texte und das Häkchen "nach oben offen".
   // Anders als die Spieldauer ist die Spieleranzahl Pflicht: "von" muss ausgefüllt sein.
-  static fromInput(minInput: string, maxInput = '', openEnded = false): Result<PlayerCount> {
+  static fromInput(minInput: string, maxInput: string, openEnded = false): Result<PlayerCount> {
     const minText = minInput.trim()
     const maxText = maxInput.trim()
 

@@ -3,21 +3,27 @@ import { describe, expect, test } from 'vitest'
 
 import type { Game } from '../../src/domain/Game'
 import {
+  canEditPlayerCountMax,
   canEditPlayTimeMax,
+  canTogglePlayerCountOpenEnded,
   canTogglePlayTimeOpenEnded,
   canToggleSecondaryGenre,
   emptyForm,
   formFromGame,
   formHasChanges,
   withGenre,
+  withPlayerCountMin,
+  withPlayerCountOpenEnded,
   withPlayTimeMin,
   withPlayTimeOpenEnded,
   withSecondaryGenreToggled,
 } from '../../src/ui/gameForm'
 import { azul, collectionOf, dixit, dixitData, fluegelschlag, sofaShelfData } from '../testData'
 
-// Die freiwilligen Felder, alle leer
+// "bis" und "nach oben offen" der Spieleranzahl und die freiwilligen Felder, alle leer
 const noDetailInputs = {
+  playerCountMaxInput: '',
+  playerCountOpenEndedInput: false,
   playTimeMinInput: '',
   playTimeMaxInput: '',
   playTimeOpenEndedInput: false,
@@ -33,7 +39,7 @@ describe('Formular', () => {
     expect(emptyForm()).toEqual({
       ...noDetailInputs,
       nameInput: '',
-      playerCountInput: '',
+      playerCountMinInput: '',
       error: null,
       editing: null,
     })
@@ -43,7 +49,7 @@ describe('Formular', () => {
     expect(formFromGame(dixit)).toEqual({
       ...noDetailInputs,
       nameInput: 'Dixit',
-      playerCountInput: '3',
+      playerCountMinInput: '3',
       error: null,
       editing: dixit,
     })
@@ -52,7 +58,9 @@ describe('Formular', () => {
   test('Auch die freiwilligen Angaben des Spiels stehen im Formular', () => {
     expect(formFromGame(fluegelschlag)).toEqual({
       nameInput: 'Flügelschlag',
-      playerCountInput: '5',
+      playerCountMinInput: '1',
+      playerCountMaxInput: '5',
+      playerCountOpenEndedInput: false,
       playTimeMinInput: '40',
       playTimeMaxInput: '70',
       playTimeOpenEndedInput: false,
@@ -70,6 +78,62 @@ describe('Formular', () => {
     const form = formFromGame(azul)
     expect(form.playTimeMinInput).toBe('45')
     expect(form.playTimeMaxInput).toBe('')
+  })
+})
+
+describe('Spieleranzahl im Formular', () => {
+  test('Eine einzelne Spieleranzahl füllt nur "von"', () => {
+    const form = formFromGame(dixit)
+    expect(form.playerCountMinInput).toBe('3')
+    expect(form.playerCountMaxInput).toBe('')
+    expect(form.playerCountOpenEndedInput).toBe(false)
+  })
+
+  test('"bis" lässt sich erst ausfüllen, wenn "von" ausgefüllt ist', () => {
+    expect(canEditPlayerCountMax(emptyForm())).toBe(false)
+    expect(canEditPlayerCountMax(withPlayerCountMin(emptyForm(), '  '))).toBe(false)
+    expect(canEditPlayerCountMax(withPlayerCountMin(emptyForm(), '2'))).toBe(true)
+  })
+
+  test('Wird "von" geleert, wird auch "bis" geleert', () => {
+    const form = withPlayerCountMin(formFromGame(fluegelschlag), '')
+    expect(form.playerCountMinInput).toBe('')
+    expect(form.playerCountMaxInput).toBe('')
+  })
+
+  test('Wird "von" nur geändert, bleibt "bis" stehen', () => {
+    const form = withPlayerCountMin(formFromGame(fluegelschlag), '2')
+    expect(form.playerCountMinInput).toBe('2')
+    expect(form.playerCountMaxInput).toBe('5')
+  })
+
+  test('"Nach oben offen" lässt sich erst ankreuzen, wenn "von" ausgefüllt ist', () => {
+    expect(canTogglePlayerCountOpenEnded(emptyForm())).toBe(false)
+    expect(withPlayerCountOpenEnded(emptyForm(), true).playerCountOpenEndedInput).toBe(false)
+    expect(canTogglePlayerCountOpenEnded(withPlayerCountMin(emptyForm(), '4'))).toBe(true)
+  })
+
+  test('"Nach oben offen" leert und sperrt "bis"', () => {
+    const form = withPlayerCountOpenEnded(formFromGame(fluegelschlag), true)
+    expect(form.playerCountOpenEndedInput).toBe(true)
+    expect(form.playerCountMaxInput).toBe('')
+    expect(canEditPlayerCountMax(form)).toBe(false)
+
+    // Häkchen wieder weg: "bis" lässt sich wieder ausfüllen
+    expect(canEditPlayerCountMax(withPlayerCountOpenEnded(form, false))).toBe(true)
+  })
+
+  test('Wird "von" geleert, verschwindet auch das Häkchen "nach oben offen"', () => {
+    const open = withPlayerCountOpenEnded(withPlayerCountMin(emptyForm(), '4'), true)
+    expect(withPlayerCountMin(open, '').playerCountOpenEndedInput).toBe(false)
+  })
+
+  test('Ein Spiel mit Spieleranzahl nach oben offen füllt "von" und das Häkchen', () => {
+    const data = [{ ...dixitData, playerCountMin: 4, playerCountOpenEnded: true }]
+    const form = formFromGame(collectionOf(data).games[0] as Game)
+    expect(form.playerCountMinInput).toBe('4')
+    expect(form.playerCountMaxInput).toBe('')
+    expect(form.playerCountOpenEndedInput).toBe(true)
   })
 })
 
@@ -163,15 +227,18 @@ describe('Ungespeicherte Eingaben erkennen', () => {
 
   test('Eingaben im neuen Formular zählen als Änderung', () => {
     expect(formHasChanges({ ...emptyForm(), nameInput: 'Monopoly' })).toBe(true)
-    expect(formHasChanges({ ...emptyForm(), playerCountInput: '4' })).toBe(true)
+    expect(formHasChanges({ ...emptyForm(), playerCountMinInput: '4' })).toBe(true)
   })
 
   test('Geänderte Eingaben beim Bearbeiten zählen als Änderung', () => {
     expect(formHasChanges({ ...formFromGame(dixit), nameInput: 'Dixit Odyssey' })).toBe(true)
-    expect(formHasChanges({ ...formFromGame(dixit), playerCountInput: '6' })).toBe(true)
+    expect(formHasChanges({ ...formFromGame(dixit), playerCountMinInput: '6' })).toBe(true)
   })
 
   test.each([
+    { playerCountMinInput: '2' },
+    { playerCountMaxInput: '6' },
+    { playerCountOpenEndedInput: true },
     { playTimeMinInput: '41' },
     { playTimeMaxInput: '71' },
     { playTimeOpenEndedInput: true },
@@ -180,12 +247,12 @@ describe('Ungespeicherte Eingaben erkennen', () => {
     { secondaryGenresInput: ['strategy' as const] },
     { shelfIdInput: '' },
     { descriptionInput: 'Anders' },
-  ])('Geänderte freiwillige Angabe %j zählt als Änderung', (changes) => {
+  ])('Geänderte Angabe %j zählt als Änderung', (changes) => {
     expect(formHasChanges({ ...formFromGame(fluegelschlag), ...changes })).toBe(true)
   })
 
   test('Zurückgetippte Eingaben zählen nicht als Änderung', () => {
-    const form = { ...formFromGame(dixit), nameInput: 'Dixit', playerCountInput: '3' }
+    const form = { ...formFromGame(dixit), nameInput: 'Dixit', playerCountMinInput: '3' }
     expect(formHasChanges(form)).toBe(false)
   })
 

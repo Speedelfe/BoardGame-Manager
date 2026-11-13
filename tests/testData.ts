@@ -35,7 +35,7 @@ export const bueroShelfData: ShelfData = {
 
 // Feste IDs, damit man sie in Tests und Fehlermeldungen wiedererkennt.
 // Dixit hat keine freiwilligen Angaben, Azul nur eine einzelne Spieldauer, Flügelschlag alle
-// (es steht im Sofaschrank).
+// (es steht im Sofaschrank). Flügelschlag hat auch als einziges eine Spieleranzahl von-bis.
 export const dixitData: GameData = {
   ...noDetailsData,
   id: '11111111-1111-1111-1111-111111111111',
@@ -58,8 +58,8 @@ export const azulData: GameData = {
 export const fluegelschlagData: GameData = {
   id: '33333333-3333-3333-3333-333333333333',
   name: 'Flügelschlag',
-  playerCountMin: 5,
-  playerCountMax: null,
+  playerCountMin: 1,
+  playerCountMax: 5,
   playerCountOpenEnded: false,
   playTimeMin: 40,
   playTimeMax: 70,

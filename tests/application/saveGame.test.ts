@@ -32,21 +32,24 @@ const noDetailsInput = {
   description: '',
 }
 
+// Dazu bei der Spieleranzahl nur "von": kein "bis", nicht nach oben offen
+const singleInput = { ...noDetailsInput, playerCountMax: '', playerCountOpenEnded: false }
+
 // Neues Spiel mit diesen Eingaben speichern
-const saveNew = (repository: GameRepository, name: string, playerCount: string) =>
-  saveGame(repository, games, shelves, { ...noDetailsInput, editing: null, name, playerCount })
+const saveNew = (repository: GameRepository, name: string, playerCountMin: string) =>
+  saveGame(repository, games, shelves, { ...singleInput, editing: null, name, playerCountMin })
 
 // Vorhandenes Spiel mit geänderten Eingaben speichern
-const saveEdited = (repository: GameRepository, game: Game, name: string, playerCount: string) =>
-  saveGame(repository, games, shelves, { ...noDetailsInput, editing: game, name, playerCount })
+const saveEdited = (repository: GameRepository, game: Game, name: string, playerCountMin: string) =>
+  saveGame(repository, games, shelves, { ...singleInput, editing: game, name, playerCountMin })
 
 // Neues Spiel "Monopoly" mit diesen freiwilligen Angaben speichern
 const saveWithDetails = (details: Partial<GameInput>) =>
   saveGame(new MemoryGameRepository(), games, shelves, {
-    ...noDetailsInput,
+    ...singleInput,
     editing: null,
     name: 'Monopoly',
-    playerCount: '4',
+    playerCountMin: '4',
     ...details,
   })
 
@@ -104,6 +107,59 @@ describe('Neues Spiel speichern', () => {
   test('Schlägt das Speichern fehl, gibt es eine Fehlermeldung', async () => {
     const message = expectError(await saveNew(new BrokenRepository(), 'Monopoly', '4'))
     expect(message).toBe('Speichern hat nicht geklappt: Platte voll')
+  })
+})
+
+describe('Spieleranzahl speichern', () => {
+  test('Nur "von" ergibt eine einzelne Zahl', async () => {
+    const { game } = expectOk(await saveWithDetails({ playerCountMin: '4' }))
+    expect(game.playerCount.text).toBe('4 Spieler')
+  })
+
+  test('"von" und "bis" ergeben einen Bereich', async () => {
+    const { game } = expectOk(await saveWithDetails({ playerCountMin: '2', playerCountMax: '5' }))
+    expect(game.playerCount.text).toBe('2–5 Spieler')
+  })
+
+  test('Mit Häkchen ist die Spieleranzahl nach oben offen', async () => {
+    const { game } = expectOk(
+      await saveWithDetails({ playerCountMin: '4', playerCountOpenEnded: true }),
+    )
+    expect(game.playerCount.text).toBe('ab 4 Spieler')
+  })
+
+  test.each<[Partial<GameInput>, string]>([
+    [
+      { playerCountMin: '', playerCountMax: '5' },
+      'Bitte gib bei der Spieleranzahl zuerst "von" an.',
+    ],
+    [
+      { playerCountMin: '5', playerCountMax: '2' },
+      'Bei der Spieleranzahl darf "von" nicht größer als "bis" sein.',
+    ],
+    [
+      { playerCountMin: '2', playerCountMax: 'viele' },
+      'Die Spieleranzahl muss eine Zahl sein.',
+    ],
+    [
+      { playerCountMin: '2', playerCountMax: '5', playerCountOpenEnded: true },
+      'Eine Spieleranzahl, die nach oben offen ist, kann kein "bis" haben.',
+    ],
+  ])('Ungültige Spieleranzahl %j wird abgelehnt', async (playerCount, expected) => {
+    expect(expectError(await saveWithDetails(playerCount))).toBe(expected)
+  })
+
+  test('Beim Bearbeiten ersetzt die neue Spieleranzahl die alte', async () => {
+    const { game } = expectOk(
+      await saveGame(new MemoryGameRepository(), games, shelves, {
+        ...singleInput,
+        editing: dixit,
+        name: 'Dixit',
+        playerCountMin: '3',
+        playerCountMax: '8',
+      }),
+    )
+    expect(game.playerCount.text).toBe('3–8 Spieler')
   })
 })
 
@@ -165,10 +221,10 @@ describe('Freiwillige Angaben speichern', () => {
   test('Beim Bearbeiten ersetzen die neuen Angaben die alten', async () => {
     const { game } = expectOk(
       await saveGame(new MemoryGameRepository(), games, shelves, {
-        ...noDetailsInput,
+        ...singleInput,
         editing: fluegelschlag,
         name: 'Flügelschlag',
-        playerCount: '5',
+        playerCountMin: '5',
         playTimeMin: '50',
       }),
     )

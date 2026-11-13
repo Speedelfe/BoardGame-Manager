@@ -158,9 +158,9 @@ describe('Auswählen und Formular öffnen', () => {
     expect(manager.state.value.form.error).not.toBeNull()
 
     manager.changeName('Monopoly')
-    manager.changePlayerCount('4')
+    manager.changePlayerCountMin('4')
     expect(manager.state.value.form.nameInput).toBe('Monopoly')
-    expect(manager.state.value.form.playerCountInput).toBe('4')
+    expect(manager.state.value.form.playerCountMinInput).toBe('4')
     expect(manager.state.value.form.error).toBeNull()
   })
 
@@ -189,7 +189,7 @@ describe('Speichern', () => {
       const manager = managerWith(new JsonFileGameRepository(path))
       manager.showNewGame()
       manager.changeName('Monopoly')
-      manager.changePlayerCount('4')
+      manager.changePlayerCountMin('4')
       await manager.saveForm()
 
       const state = manager.state.value
@@ -205,7 +205,7 @@ describe('Speichern', () => {
       const manager = managerWith(new JsonFileGameRepository(path))
       manager.showNewGame()
       manager.changeName('Monopoly')
-      manager.changePlayerCount('4')
+      manager.changePlayerCountMin('4')
       manager.changePlayTimeMin('60')
       manager.changePlayTimeMax('180')
       manager.changeGenre('dice')
@@ -226,11 +226,49 @@ describe('Speichern', () => {
       expect(await loadFrom(path)).toEqual(state.collection)
     }))
 
+  test('Speichern mit Spieleranzahl von-bis: im Spiel und in der Datei', () =>
+    withTestFolder(async (folder) => {
+      const path = join(folder, 'games.json')
+      const manager = managerWith(new JsonFileGameRepository(path))
+      manager.showNewGame()
+      manager.changeName('Monopoly')
+      manager.changePlayerCountMin('2')
+      manager.changePlayerCountMax('8')
+      await manager.saveForm()
+
+      const state = manager.state.value
+      expect(state.form.error).toBeNull()
+      expect(state.chosenGame?.playerCount.text).toBe('2–8 Spieler')
+      expect(await loadFrom(path)).toEqual(state.collection)
+    }))
+
+  test('Häkchen "nach oben offen" bei der Spieleranzahl leert "bis"', async () => {
+    const manager = managerWith(new MemoryGameRepository())
+    manager.showNewGame()
+    manager.changeName('Monopoly')
+    manager.changePlayerCountMin('4')
+    manager.changePlayerCountMax('8')
+    manager.changePlayerCountOpenEnded(true)
+    expect(manager.state.value.form.playerCountMaxInput).toBe('')
+
+    await manager.saveForm()
+    expect(manager.state.value.chosenGame?.playerCount.text).toBe('ab 4 Spieler')
+  })
+
+  test('Wird "von" der Spieleranzahl geleert, wird auch "bis" geleert', () => {
+    const manager = managerWith(new MemoryGameRepository())
+    manager.showNewGame()
+    manager.changePlayerCountMin('2')
+    manager.changePlayerCountMax('8')
+    manager.changePlayerCountMin('')
+    expect(manager.state.value.form.playerCountMaxInput).toBe('')
+  })
+
   test('Ungültige freiwillige Angabe zeigt den Fehler, Tippen blendet ihn wieder aus', async () => {
     const manager = managerWith(new MemoryGameRepository())
     manager.showNewGame()
     manager.changeName('Monopoly')
-    manager.changePlayerCount('4')
+    manager.changePlayerCountMin('4')
     manager.changePlayTimeMin('90')
     manager.changePlayTimeMax('60')
     await manager.saveForm()
@@ -278,7 +316,7 @@ describe('Speichern', () => {
         ...initialState(),
         loadError: 'kaputt',
         formOpen: true,
-        form: { ...emptyForm(), nameInput: 'Monopoly', playerCountInput: '4' },
+        form: { ...emptyForm(), nameInput: 'Monopoly', playerCountMinInput: '4' },
       })
       await manager.saveForm()
 
@@ -295,7 +333,7 @@ describe('Speichern', () => {
       const manager = managerWith(new JsonFileGameRepository(join(blocker, 'games.json')))
       manager.showNewGame()
       manager.changeName('Monopoly')
-      manager.changePlayerCount('4')
+      manager.changePlayerCountMin('4')
       await manager.saveForm()
 
       expect(manager.state.value.formOpen).toBe(true)

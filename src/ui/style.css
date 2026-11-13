@@ -196,14 +196,14 @@ textarea {
   overflow-y: auto;
 }
 
-/* Spieldauer: "von" und "bis" nebeneinander */
-.play-time {
+/* Spieleranzahl und Spieldauer: "von" und "bis" nebeneinander */
+.from-to {
   display: flex;
   align-items: center;
   gap: 8px;
 }
 
-.play-time input {
+.from-to input {
   flex: 1;
   min-width: 0;
 }

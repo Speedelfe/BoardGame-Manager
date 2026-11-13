@@ -11,7 +11,7 @@ weiter erreichbar.
 
 ## Was die App kann
 
-- Spiele mit Name und Spieleranzahl anlegen, bearbeiten und löschen
+- Spiele mit Name und Spieleranzahl (eine Zahl, von-bis oder nach oben offen) anlegen, bearbeiten und löschen
 - Freiwillig zu jedem Spiel: Spieldauer in Minuten (eine Zahl, von-bis oder nach oben offen), Genre und Nebengenres,
   das Regal, zuletzt gespielt und eine Beschreibung
 - Regale (Schrankplätze) anlegen, umbenennen und löschen und sehen, welche Spiele darin stehen
