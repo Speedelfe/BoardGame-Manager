@@ -218,21 +218,22 @@ textarea {
   gap: 5px;
 }
 
-/* Links die Textfelder: Die Spalte bekommt den Platz, den die rechte übrig lässt */
-.form-column-text {
+/* Links Name, Beschreibung, Regal und Datum:
+   Die Spalte bekommt den Platz, den die rechte übrig lässt */
+.form-column-left {
   flex: 1;
   min-width: 240px;
 }
 
-/* Die Beschreibung reicht bis zum unteren Ende der Spalte */
-.form-column-text textarea {
-  flex: 1;
-  min-height: 120px;
-  resize: none;
+/* Die Beschreibung hat eine feste Höhe. Wer mehr Platz braucht, zieht sie an der Ecke größer. */
+.form-column-left textarea {
+  flex-shrink: 0;
+  height: 260px;
+  min-height: 80px;
 }
 
-/* Rechts alle anderen Angaben, so breit wie das Formular früher war */
-.form-column-options {
+/* Rechts Spieleranzahl, Spieldauer, Genres und Spielmodus, so breit wie das Formular früher war */
+.form-column-right {
   width: 300px;
 }
 

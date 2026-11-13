@@ -65,9 +65,10 @@ function isChecked(event: Event): boolean {
       }}
     </h2>
 
-    <!-- Zwei Spalten: links die Textfelder, rechts alle anderen Angaben -->
+    <!-- Zwei Spalten: links Name, Beschreibung, Regal und Datum,
+         rechts Spieleranzahl, Spieldauer, Genres und Spielmodus -->
     <div class="form-columns">
-      <div class="form-column form-column-text">
+      <div class="form-column form-column-left">
         <label for="game-name">Spielname</label>
         <input
           id="game-name"
@@ -77,7 +78,7 @@ function isChecked(event: Event): boolean {
           @input="emit('changeName', textOf($event))"
         />
 
-        <!-- Die Beschreibung füllt die Spalte bis unten aus (siehe style.css) -->
+        <!-- Die Höhe steht in style.css. Das Feld lässt sich an der Ecke größer ziehen. -->
         <label for="description">Beschreibung (freiwillig)</label>
         <textarea
           id="description"
@@ -85,9 +86,27 @@ function isChecked(event: Event): boolean {
           :value="form.descriptionInput"
           @input="emit('changeDescription', textOf($event))"
         ></textarea>
+
+        <!-- Die Regale selbst pflegt man in der Ansicht "Regale" -->
+        <label for="shelf">Regal (freiwillig)</label>
+        <select id="shelf" :value="form.shelfIdInput" @change="emit('changeShelf', textOf($event))">
+          <option value="">kein Regal</option>
+          <option v-for="shelf in shelves" :key="shelf.id.value" :value="shelf.id.value">
+            {{ shelf.name.text }}
+          </option>
+        </select>
+
+        <label for="last-played">Zuletzt gespielt (freiwillig)</label>
+        <input
+          id="last-played"
+          type="date"
+          :max="today"
+          :value="form.lastPlayedInput"
+          @input="emit('changeLastPlayed', textOf($event))"
+        />
       </div>
 
-      <div class="form-column form-column-options">
+      <div class="form-column form-column-right">
         <!-- "von" ist Pflicht. "von" allein ist eine einzelne Zahl, mit "bis" ein Bereich. -->
         <label for="player-count-min">Spieleranzahl</label>
         <div class="from-to">
@@ -185,24 +204,6 @@ function isChecked(event: Event): boolean {
             {{ gameModeNames[mode] }}
           </label>
         </fieldset>
-
-        <!-- Die Regale selbst pflegt man in der Ansicht "Regale" -->
-        <label for="shelf">Regal (freiwillig)</label>
-        <select id="shelf" :value="form.shelfIdInput" @change="emit('changeShelf', textOf($event))">
-          <option value="">kein Regal</option>
-          <option v-for="shelf in shelves" :key="shelf.id.value" :value="shelf.id.value">
-            {{ shelf.name.text }}
-          </option>
-        </select>
-
-        <label for="last-played">Zuletzt gespielt (freiwillig)</label>
-        <input
-          id="last-played"
-          type="date"
-          :max="today"
-          :value="form.lastPlayedInput"
-          @input="emit('changeLastPlayed', textOf($event))"
-        />
       </div>
     </div>
 
