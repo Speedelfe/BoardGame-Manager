@@ -40,21 +40,27 @@ export const dixitData: GameData = {
   ...noDetailsData,
   id: '11111111-1111-1111-1111-111111111111',
   name: 'Dixit',
-  playerCount: 3,
+  playerCountMin: 3,
+  playerCountMax: null,
+  playerCountOpenEnded: false,
 }
 
 export const azulData: GameData = {
   ...noDetailsData,
   id: '22222222-2222-2222-2222-222222222222',
   name: 'Azul',
-  playerCount: 4,
+  playerCountMin: 4,
+  playerCountMax: null,
+  playerCountOpenEnded: false,
   playTimeMin: 45,
 }
 
 export const fluegelschlagData: GameData = {
   id: '33333333-3333-3333-3333-333333333333',
   name: 'Flügelschlag',
-  playerCount: 5,
+  playerCountMin: 5,
+  playerCountMax: null,
+  playerCountOpenEnded: false,
   playTimeMin: 40,
   playTimeMax: 70,
   playTimeOpenEnded: false,

@@ -49,7 +49,11 @@ export function cleanDescription(input: string | null): string | null {
 export interface GameData {
   id: string
   name: string
-  playerCount: number
+  // Spieleranzahl. Ist nur "playerCountMin" gesetzt, ist es eine einzelne Zahl, sonst von-bis.
+  playerCountMin: number
+  playerCountMax: number | null
+  // true = nach oben offen ("ab ... Spieler"). Geht nur ohne "playerCountMax".
+  playerCountOpenEnded: boolean
   // Spieldauer in Minuten. Ist nur "playTimeMin" gesetzt, ist es eine einzelne Zahl, sonst von-bis.
   playTimeMin: number | null
   playTimeMax: number | null

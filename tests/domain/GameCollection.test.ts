@@ -120,7 +120,9 @@ describe('Sortieren', () => {
       ...noDetailsData,
       id: GameId.create().value,
       name: text,
-      playerCount: 2,
+      playerCountMin: 2,
+      playerCountMax: null,
+      playerCountOpenEnded: false,
     }))
     return names(collectionOf(data).sortedByName())
   }
@@ -197,8 +199,34 @@ describe('Gespeicherte Daten prüfen', () => {
   })
 
   test.each([0, -3, 101])('Spiel mit ungültiger Spieleranzahl %d wird erkannt', (players) => {
-    const message = restoreError([dixitData, { ...azulData, playerCount: players }])
+    const message = restoreError([dixitData, { ...azulData, playerCountMin: players }])
     expect(message).toBe(`Diese Spiele haben eine ungültige Spieleranzahl: "Azul" (${players})`)
+  })
+
+  test.each<[Partial<GameData>, string]>([
+    [{ playerCountMin: 5, playerCountMax: 2 }, '5–2'],
+    [{ playerCountMin: 2, playerCountMax: 101 }, '2–101'],
+    [
+      { playerCountMin: 2, playerCountMax: 5, playerCountOpenEnded: true },
+      '2–5, nach oben offen',
+    ],
+  ])('Spiel mit ungültiger Spieleranzahl von-bis %j wird erkannt', (playerCount, shown) => {
+    const message = restoreError([dixitData, { ...azulData, ...playerCount }])
+    expect(message).toBe(`Diese Spiele haben eine ungültige Spieleranzahl: "Azul" (${shown})`)
+  })
+
+  test('Spieleranzahl von-bis und nach oben offen bleiben erhalten', () => {
+    const data = [
+      { ...dixitData, playerCountMin: 2, playerCountMax: 5 },
+      { ...azulData, playerCountMin: 4, playerCountOpenEnded: true },
+    ]
+    const restored = expectOk(GameCollection.restore(data))
+
+    expect(restored.games.map((game) => game.playerCount.text)).toEqual([
+      '2–5 Spieler',
+      'ab 4 Spieler',
+    ])
+    expect(restored.toData()).toEqual(data)
   })
 
   test.each(['Dixit', 'dixit', ' DIXIT '])('Doppelter Spielname "%s" wird erkannt', (text) => {

@@ -43,7 +43,7 @@ export class GameCollection {
       if (!id.ok) return id
       const name = GameName.create(entry.name)
       if (!name.ok) return name
-      const playerCount = PlayerCount.fromNumbers(entry.playerCount, null)
+      const playerCount = playerCountFromData(entry)
       if (!playerCount.ok) return playerCount
       const details = detailsFromData(entry)
       if (!details.ok) return fail(`Spiel "${entry.name}": ${details.error}`)
@@ -58,7 +58,9 @@ export class GameCollection {
     return this.games.map((game) => ({
       id: game.id.value,
       name: game.name.text,
-      playerCount: game.playerCount.min,
+      playerCountMin: game.playerCount.min,
+      playerCountMax: game.playerCount.max,
+      playerCountOpenEnded: game.playerCount.openEnded,
       playTimeMin: game.details.playTime?.min ?? null,
       playTimeMax: game.details.playTime?.max ?? null,
       playTimeOpenEnded: game.details.playTime?.openEnded ?? false,
@@ -168,10 +170,10 @@ function findProblem(data: readonly GameData[]): string | null {
     return `Diese Spiele haben keinen Namen (ID): ${nameless.map(normalizedId).join(', ')}`
   }
 
-  const wrongPlayerCounts = data.filter((entry) => !PlayerCount.fromNumbers(entry.playerCount, null).ok)
+  const wrongPlayerCounts = data.filter((entry) => !playerCountFromData(entry).ok)
   if (wrongPlayerCounts.length > 0) {
     const details = wrongPlayerCounts
-      .map((entry) => `"${entry.name}" (${entry.playerCount})`)
+      .map((entry) => `"${entry.name}" (${storedPlayerCountText(entry)})`)
       .join(', ')
     return `Diese Spiele haben eine ungültige Spieleranzahl: ${details}`
   }
@@ -184,6 +186,25 @@ function findProblem(data: readonly GameData[]): string | null {
   }
 
   return null
+}
+
+// Prüft die Spieleranzahl eines gespeicherten Spiels
+function playerCountFromData(entry: GameData): Result<PlayerCount> {
+  return PlayerCount.fromNumbers(
+    entry.playerCountMin,
+    entry.playerCountMax,
+    entry.playerCountOpenEnded,
+  )
+}
+
+// Die gespeicherte Spieleranzahl so, wie sie in der Datei steht, für Fehlermeldungen:
+// "4", "5–2" oder "2–5, nach oben offen"
+function storedPlayerCountText(entry: GameData): string {
+  const range =
+    entry.playerCountMax === null
+      ? String(entry.playerCountMin)
+      : `${entry.playerCountMin}–${entry.playerCountMax}`
+  return entry.playerCountOpenEnded ? `${range}, nach oben offen` : range
 }
 
 // Prüft die freiwilligen Angaben eines gespeicherten Spiels

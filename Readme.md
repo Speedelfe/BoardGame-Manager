@@ -31,8 +31,10 @@ liegen.
 Kann die Datei beim Start nicht gelesen werden, zeigt die App eine Fehlermeldung und sperrt das
 Speichern, damit die Datei nicht überschrieben wird.
 
-Ort und Format der Datei sind dieselben wie in der früheren F#-Fassung, eine vorhandene Sammlung
-wird also weiter gelesen.
+Die Datei liegt am selben Ort wie in der früheren F#-Fassung, eine vorhandene Sammlung wird also
+weiter gelesen. Ältere Dateien kennen bei der Spieleranzahl nur eine Zahl. Sie gilt als Höchstzahl
+(aus 4 wird „1–4 Spieler") und wird beim nächsten Speichern auf die neue Form umgestellt. Danach
+kann die F#-Fassung die Datei nicht mehr lesen.
 
 ## Entwicklung
 

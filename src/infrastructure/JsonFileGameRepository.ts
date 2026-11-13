@@ -7,13 +7,16 @@ import type { GameRepository } from '../domain/GameRepository'
 import { errorMessage, fail, ok, type Result } from '../domain/Result'
 import { isObject, readJson, writeListToJsonFile } from './jsonFile'
 
-// So steht ein Spiel in der Datei. Das Format ist dasselbe wie in der alten F#-App,
-// deshalb heißt die Spieleranzahl hier weiter "playerNumbers".
-// Die freiwilligen Angaben kannte die alte App noch nicht. Sie dürfen in der Datei fehlen.
+// So steht ein Spiel in der Datei.
+// Die freiwilligen Angaben kannte die alte F#-App noch nicht. Sie dürfen in der Datei fehlen.
+// Ältere Dateien haben statt der drei Felder zur Spieleranzahl nur eine Zahl "playerNumbers".
+// Sie werden weiter gelesen (siehe readPlayerCount) und beim nächsten Speichern umgestellt.
 interface StoredGame {
   id: string
   name: string
-  playerNumbers: number
+  playerCountMin: number
+  playerCountMax: number | null
+  playerCountOpenEnded: boolean
   playTimeMin: number | null
   playTimeMax: number | null
   playTimeOpenEnded: boolean
@@ -57,7 +60,9 @@ export class JsonFileGameRepository implements GameRepository {
     const gameList: StoredGame[] = collection.toData().map((game) => ({
       id: game.id,
       name: game.name,
-      playerNumbers: game.playerCount,
+      playerCountMin: game.playerCountMin,
+      playerCountMax: game.playerCountMax,
+      playerCountOpenEnded: game.playerCountOpenEnded,
       playTimeMin: game.playTimeMin,
       playTimeMax: game.playTimeMax,
       playTimeOpenEnded: game.playTimeOpenEnded,
@@ -89,16 +94,15 @@ function readGameList(content: unknown): Result<GameData[]> {
     if (!isObject(entry)) {
       return fail(`${position} ist kein gültiger Eintrag.`)
     }
-    const { id, name, playerNumbers } = entry
+    const { id, name } = entry
     if (typeof id !== 'string') {
       return fail(`${position}: Das Feld "id" fehlt oder ist kein Text.`)
     }
     if (typeof name !== 'string') {
       return fail(`${position}: Das Feld "name" fehlt oder ist kein Text.`)
     }
-    if (typeof playerNumbers !== 'number') {
-      return fail(`${position}: Das Feld "playerNumbers" fehlt oder ist keine Zahl.`)
-    }
+    const playerCount = readPlayerCount(entry)
+    if (!playerCount.ok) return fail(`${position}: ${playerCount.error}`)
 
     // Freiwillige Angaben: Fehlt ein Feld (oder ist es null), gilt es als nicht ausgefüllt
     const field = (fieldName: string) => `${position}: Das Feld "${fieldName}"`
@@ -122,7 +126,7 @@ function readGameList(content: unknown): Result<GameData[]> {
     games.push({
       id,
       name,
-      playerCount: playerNumbers,
+      ...playerCount.value,
       playTimeMin: playTimeMin ?? null,
       playTimeMax: playTimeMax ?? null,
       playTimeOpenEnded,
@@ -134,6 +138,45 @@ function readGameList(content: unknown): Result<GameData[]> {
     })
   }
   return ok(games)
+}
+
+// Die Spieleranzahl eines Spiels aus der Datei
+type StoredPlayerCount = Pick<
+  GameData,
+  'playerCountMin' | 'playerCountMax' | 'playerCountOpenEnded'
+>
+
+// Liest die Spieleranzahl eines Spiels aus der Datei: entweder die drei neuen Felder
+// oder, bei einer älteren Datei, die eine Zahl "playerNumbers".
+function readPlayerCount(entry: Record<string, unknown>): Result<StoredPlayerCount> {
+  const { playerCountMin, playerCountMax, playerNumbers } = entry
+  const playerCountOpenEnded = entry['playerCountOpenEnded'] ?? false
+
+  // Ältere Datei: Die eine Zahl ist die Höchstzahl, gespielt werden kann ab 1 Spieler.
+  if (playerCountMin === undefined || playerCountMin === null) {
+    if (playerNumbers === undefined || playerNumbers === null) {
+      return fail('Das Feld "playerCountMin" fehlt.')
+    }
+    if (typeof playerNumbers !== 'number') {
+      return fail('Das Feld "playerNumbers" ist keine Zahl.')
+    }
+    // Eine Zahl unter 1 ist ungültig. Sie wird unverändert weitergegeben,
+    // damit die Fehlermeldung genau die Zahl aus der Datei nennt.
+    return playerNumbers < 1
+      ? ok({ playerCountMin: playerNumbers, playerCountMax: null, playerCountOpenEnded: false })
+      : ok({ playerCountMin: 1, playerCountMax: playerNumbers, playerCountOpenEnded: false })
+  }
+
+  if (typeof playerCountMin !== 'number') {
+    return fail('Das Feld "playerCountMin" ist keine Zahl.')
+  }
+  if (!isNumberOrMissing(playerCountMax)) {
+    return fail('Das Feld "playerCountMax" ist keine Zahl.')
+  }
+  if (typeof playerCountOpenEnded !== 'boolean') {
+    return fail('Das Feld "playerCountOpenEnded" ist weder true noch false.')
+  }
+  return ok({ playerCountMin, playerCountMax: playerCountMax ?? null, playerCountOpenEnded })
 }
 
 function isNumberOrMissing(value: unknown): value is number | null | undefined {

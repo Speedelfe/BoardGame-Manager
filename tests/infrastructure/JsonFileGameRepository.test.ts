@@ -1,7 +1,7 @@
 // Tests für Laden und Speichern der Spieleliste als Datei.
 // Alle Dateien landen in einem eigenen Ordner unter tests/.tmp, nie in der echten Spielesammlung.
 import { existsSync } from 'node:fs'
-import { writeFile } from 'node:fs/promises'
+import { readFile, writeFile } from 'node:fs/promises'
 import { join, resolve } from 'node:path'
 import { describe, expect, test } from 'vitest'
 
@@ -40,8 +40,12 @@ async function writeGameList(path: string, gameList: object[]): Promise<void> {
   await writeFile(path, JSON.stringify({ gameList }), 'utf8')
 }
 
-// Ein Spiel so, wie es in der Datei steht: Die Spieleranzahl heißt dort "playerNumbers"
-const stored = ({ playerCount, ...rest }: GameData) => ({ ...rest, playerNumbers: playerCount })
+// Ein Spiel so, wie es in einer älteren Datei steht:
+// statt der drei Felder zur Spieleranzahl nur die eine Zahl "playerNumbers"
+const oldStored = (game: GameData, playerNumbers: unknown) => {
+  const { playerCountMin, playerCountMax, playerCountOpenEnded, ...rest } = game
+  return { ...rest, playerNumbers }
+}
 
 describe('Laden und Speichern', () => {
   test('Fehlende Datei ergibt eine leere Sammlung', () =>
@@ -64,6 +68,17 @@ describe('Laden und Speichern', () => {
       expect(await loadData(path)).toEqual(data)
     }))
 
+  test('Spieleranzahl von-bis und nach oben offen werden genauso wieder geladen', () =>
+    withTestFolder(async (folder) => {
+      const path = join(folder, 'games.json')
+      const data = [
+        { ...dixitData, playerCountMin: 2, playerCountMax: 5 },
+        { ...azulData, playerCountMin: 4, playerCountOpenEnded: true },
+      ]
+      await new JsonFileGameRepository(path).save(collectionOf(data))
+      expect(await loadData(path)).toEqual(data)
+    }))
+
   test('Speichern legt einen fehlenden Ordner an', () =>
     withTestFolder(async (folder) => {
       const path = join(folder, 'data', 'games.json')
@@ -78,7 +93,8 @@ describe('Laden und Speichern', () => {
       expect(await loadData(path)).toEqual([])
     }))
 
-  test('Eine Datei der alten F#-App wird gelesen', () =>
+  // Ältere Dateien kennen nur eine Zahl "playerNumbers". Sie gilt als Höchstzahl, gespielt wird ab 1.
+  test('Eine Datei der alten F#-App wird gelesen, ihre Spieleranzahl ist die Höchstzahl', () =>
     withTestFolder(async (folder) => {
       const path = join(folder, 'games.json')
       await writeFile(
@@ -94,7 +110,32 @@ describe('Laden und Speichern', () => {
 }`,
         'utf8',
       )
-      expect(await loadData(path)).toEqual([dixitData])
+      expect(await loadData(path)).toEqual([
+        { ...dixitData, playerCountMin: 1, playerCountMax: 3 },
+      ])
+    }))
+
+  test('Die alte Spieleranzahl 1 wird zu einer einzelnen Zahl', () =>
+    withTestFolder(async (folder) => {
+      const path = join(folder, 'games.json')
+      await writeGameList(path, [oldStored(dixitData, 1)])
+      expect(await loadData(path)).toEqual([
+        { ...dixitData, playerCountMin: 1, playerCountMax: null },
+      ])
+    }))
+
+  test('Nach dem Speichern steht die alte Spieleranzahl nicht mehr in der Datei', () =>
+    withTestFolder(async (folder) => {
+      const path = join(folder, 'games.json')
+      await writeGameList(path, [oldStored(dixitData, 3)])
+      const repository = new JsonFileGameRepository(path)
+      await repository.save(expectOk(await repository.load()))
+
+      const content = await readFile(path, 'utf8')
+      expect(content).not.toContain('playerNumbers')
+      expect(await loadData(path)).toEqual([
+        { ...dixitData, playerCountMin: 1, playerCountMax: 3 },
+      ])
     }))
 })
 
@@ -123,42 +164,61 @@ describe('Fehler beim Laden', () => {
       expect(causeOf(await loadError(path))).toContain('"id"')
     }))
 
-  test('Spieleranzahl als Text ergibt einen Fehler', () =>
+  test('Spiel ohne Spieleranzahl ergibt einen Fehler', () =>
     withTestFolder(async (folder) => {
       const path = join(folder, 'games.json')
-      await writeGameList(path, [{ ...stored(dixitData), playerNumbers: '3' }])
+      await writeGameList(path, [{ id: dixitData.id, name: 'Dixit' }])
+      expect(causeOf(await loadError(path))).toBe('Spiel Nr. 1: Das Feld "playerCountMin" fehlt.')
+    }))
+
+  test('Alte Spieleranzahl als Text ergibt einen Fehler', () =>
+    withTestFolder(async (folder) => {
+      const path = join(folder, 'games.json')
+      await writeGameList(path, [oldStored(dixitData, '3')])
       expect(causeOf(await loadError(path))).toContain('"playerNumbers"')
     }))
 
   test('Ungültige ID ergibt einen Fehler', () =>
     withTestFolder(async (folder) => {
       const path = join(folder, 'games.json')
-      await writeGameList(path, [{ ...stored(dixitData), id: 'abc' }])
+      await writeGameList(path, [{ ...dixitData, id: 'abc' }])
       expect(await loadError(path)).toContain('ungültige ID')
     }))
 
   test('Doppelte IDs in der Datei ergeben einen Fehler', () =>
     withTestFolder(async (folder) => {
       const path = join(folder, 'games.json')
-      await writeGameList(path, [stored(dixitData), stored({ ...dixitData, name: 'Kopie' })])
+      await writeGameList(path, [dixitData, { ...dixitData, name: 'Kopie' }])
       expect(await loadError(path)).toContain('gleiche ID')
     }))
 
   test('Leere ID in der Datei ergibt einen Fehler', () =>
     withTestFolder(async (folder) => {
       const path = join(folder, 'games.json')
-      await writeGameList(path, [stored({ ...dixitData, id: GameId.emptyValue })])
+      await writeGameList(path, [{ ...dixitData, id: GameId.emptyValue }])
       expect(await loadError(path)).toContain('leere ID')
     }))
 
   test('Ungültige Spieleranzahl in der Datei ergibt einen Fehler', () =>
     withTestFolder(async (folder) => {
       const path = join(folder, 'games.json')
-      await writeGameList(path, [stored({ ...dixitData, playerCount: 0 })])
+      await writeGameList(path, [{ ...dixitData, playerCountMin: 5, playerCountMax: 2 }])
+      expect(causeOf(await loadError(path))).toBe(
+        'Diese Spiele haben eine ungültige Spieleranzahl: "Dixit" (5–2)',
+      )
+    }))
+
+  test.each([0, -3, 101])('Ungültige alte Spieleranzahl %d ergibt einen Fehler', (players) =>
+    withTestFolder(async (folder) => {
+      const path = join(folder, 'games.json')
+      await writeGameList(path, [oldStored(dixitData, players)])
       expect(await loadError(path)).toContain('ungültige Spieleranzahl')
     }))
 
   test.each([
+    ['playerCountMin', '3'],
+    ['playerCountMax', '5'],
+    ['playerCountOpenEnded', 'ja'],
     ['playTimeMin', '45'],
     ['playTimeMax', '60'],
     ['playTimeOpenEnded', 'ja'],
@@ -168,24 +228,24 @@ describe('Fehler beim Laden', () => {
     ['secondaryGenres', 'card'],
     ['secondaryGenres', [1, 2]],
     ['description', true],
-  ])('Freiwilliges Feld "%s" mit falscher Art von Wert (%j) ergibt einen Fehler', (field, value) =>
+  ])('Feld "%s" mit falscher Art von Wert (%j) ergibt einen Fehler', (field, value) =>
     withTestFolder(async (folder) => {
       const path = join(folder, 'games.json')
-      await writeGameList(path, [{ ...stored(dixitData), [field]: value }])
+      await writeGameList(path, [{ ...dixitData, [field]: value }])
       expect(causeOf(await loadError(path))).toContain(`Spiel Nr. 1: Das Feld "${field}"`)
     }))
 
   test('Ungültige freiwillige Angabe in der Datei ergibt einen Fehler', () =>
     withTestFolder(async (folder) => {
       const path = join(folder, 'games.json')
-      await writeGameList(path, [stored({ ...dixitData, genre: 'quatsch' })])
+      await writeGameList(path, [{ ...dixitData, genre: 'quatsch' }])
       expect(causeOf(await loadError(path))).toBe('Spiel "Dixit": "quatsch" ist kein bekanntes Genre.')
     }))
 
   test('Doppelter Spielname in der Datei ergibt einen Fehler', () =>
     withTestFolder(async (folder) => {
       const path = join(folder, 'games.json')
-      await writeGameList(path, [stored(dixitData), stored({ ...azulData, name: 'dixit' })])
+      await writeGameList(path, [dixitData, { ...azulData, name: 'dixit' }])
       expect(await loadError(path)).toContain('mehrfach')
     }))
 })
