@@ -68,7 +68,7 @@ describe('Formular', () => {
       playTimeOpenEndedInput: false,
       lastPlayedInput: '2026-10-03',
       genreInput: 'engineBuilder',
-      secondaryGenresInput: ['strategy', 'card'],
+      secondaryGenresInput: ['card', 'strategy'],
       gameModeInput: 'competitive',
       shelfIdInput: sofaShelfData.id,
       descriptionInput: 'Vögel sammeln.\nSchön ruhig.',
@@ -205,7 +205,7 @@ describe('Genres im Formular', () => {
 
   test('Nebengenres an- und abwählen, immer in der Reihenfolge der Auswahlliste', () => {
     const two = withSecondaryGenreToggled(withSecondaryGenreToggled(withCard, 'party'), 'dice')
-    expect(two.secondaryGenresInput).toEqual(['dice', 'party'])
+    expect(two.secondaryGenresInput).toEqual(['party', 'dice'])
     expect(withSecondaryGenreToggled(two, 'dice').secondaryGenresInput).toEqual(['party'])
   })
 

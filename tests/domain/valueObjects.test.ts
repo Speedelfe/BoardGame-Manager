@@ -1,7 +1,7 @@
 // Tests für die Value Objects: Spieleranzahl, Spieldauer, Datum, Genres, Spielmodus, Name und ID
 import { describe, expect, test } from 'vitest'
 
-import { GameGenres, genreNames, genres } from '../../src/domain/GameGenres'
+import { GameGenres, genreNames, genres, isGenre } from '../../src/domain/GameGenres'
 import { GameId } from '../../src/domain/GameId'
 import { gameModeFromText, gameModeNames, gameModes } from '../../src/domain/GameMode'
 import { GameName } from '../../src/domain/GameName'
@@ -216,14 +216,41 @@ describe('Genres', () => {
 
   test('Jedes Genre hat einen Namen für die Anzeige', () => {
     expect(genres.map((genre) => genreNames[genre])).toEqual([
-      'Strategie',
-      'Karten',
-      'Rätsel',
-      'Würfel',
+      'Deckbuilding',
+      'Deduktion und Bluff',
       'Enginebuilder',
+      'Familie',
+      'Geschicklichkeit',
+      'Karten',
+      'Kinder',
+      'Legespiel',
       'Party',
+      'Quiz',
+      'Rätsel',
+      'Roll & Write',
+      'Sammelspiel',
+      'Stichspiel',
+      'Strategie',
+      'Worker Placement',
+      'Wortspiel',
+      'Würfel',
       'Sonstiges',
     ])
+  })
+
+  test('Die Genres stehen alphabetisch, "Sonstiges" am Ende', () => {
+    const names = genres.map((genre) => genreNames[genre])
+    const withoutOther = names.slice(0, -1)
+
+    expect(names.at(-1)).toBe('Sonstiges')
+    expect(withoutOther).toEqual([...withoutOther].sort(new Intl.Collator('de-DE').compare))
+  })
+
+  test('Die Kürzel der bisherigen Genres gibt es weiter', () => {
+    // Sie stehen in gespeicherten Sammlungen und dürfen deshalb nicht verschwinden
+    for (const old of ['strategy', 'card', 'puzzle', 'dice', 'engineBuilder', 'party', 'other']) {
+      expect(isGenre(old)).toBe(true)
+    }
   })
 
   test.each<[string | null, string[], string]>([

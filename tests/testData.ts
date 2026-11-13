@@ -67,7 +67,7 @@ export const fluegelschlagData: GameData = {
   playTimeOpenEnded: false,
   lastPlayed: '2026-10-03',
   genre: 'engineBuilder',
-  secondaryGenres: ['strategy', 'card'],
+  secondaryGenres: ['card', 'strategy'],
   gameMode: 'competitive',
   shelfId: sofaShelfData.id,
   description: 'Vögel sammeln.\nSchön ruhig.',

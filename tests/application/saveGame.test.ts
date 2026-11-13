@@ -177,7 +177,7 @@ describe('Freiwillige Angaben speichern', () => {
         playTimeMax: '180',
         lastPlayed: '2025-12-24',
         genre: 'dice',
-        secondaryGenres: ['party', 'strategy'],
+        secondaryGenres: ['strategy', 'party'],
         gameMode: 'cooperative',
         description: '  Dauert ewig.  ',
       }),
@@ -185,7 +185,7 @@ describe('Freiwillige Angaben speichern', () => {
     expect(game.details.playTime?.text).toBe('60–180 Minuten')
     expect(game.details.lastPlayed?.text).toBe('24.12.2025')
     expect(game.details.genres.main).toBe('dice')
-    expect(game.details.genres.secondary).toEqual(['strategy', 'party'])
+    expect(game.details.genres.secondary).toEqual(['party', 'strategy'])
     expect(game.details.mode).toBe('cooperative')
     expect(game.details.description).toBe('Dauert ewig.')
   })

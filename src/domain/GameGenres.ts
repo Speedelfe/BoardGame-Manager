@@ -1,14 +1,30 @@
 import { fail, ok, type Result } from './Result'
 
-// Alle Genres, die es gibt, in der Reihenfolge der Auswahlliste.
+// Alle Genres, die es gibt, in der Reihenfolge der Auswahlliste:
+// alphabetisch nach dem deutschen Namen, "Sonstiges" am Ende.
+// Die Liste mischt mit Absicht, was für eine Art Spiel es ist (z.B. Familie, Party)
+// und wie es funktioniert (z.B. Deckbuilding, Legespiel).
 // Diese Kürzel stehen auch in der Datei, deshalb sollten sie sich nicht mehr ändern.
+// Die Reihenfolge darf sich ändern, sie steht nicht in der Datei.
 export const genres = [
-  'strategy',
-  'card',
-  'puzzle',
-  'dice',
+  'deckBuilding',
+  'deduction',
   'engineBuilder',
+  'family',
+  'dexterity',
+  'card',
+  'children',
+  'tilePlacement',
   'party',
+  'quiz',
+  'puzzle',
+  'rollAndWrite',
+  'setCollection',
+  'trickTaking',
+  'strategy',
+  'workerPlacement',
+  'word',
+  'dice',
   'other',
 ] as const
 
@@ -16,12 +32,24 @@ export type Genre = (typeof genres)[number]
 
 // So heißen die Genres in der Oberfläche
 export const genreNames: Record<Genre, string> = {
-  strategy: 'Strategie',
-  card: 'Karten',
-  puzzle: 'Rätsel',
-  dice: 'Würfel',
+  deckBuilding: 'Deckbuilding',
+  deduction: 'Deduktion und Bluff',
   engineBuilder: 'Enginebuilder',
+  family: 'Familie',
+  dexterity: 'Geschicklichkeit',
+  card: 'Karten',
+  children: 'Kinder',
+  tilePlacement: 'Legespiel',
   party: 'Party',
+  quiz: 'Quiz',
+  puzzle: 'Rätsel',
+  rollAndWrite: 'Roll & Write',
+  setCollection: 'Sammelspiel',
+  trickTaking: 'Stichspiel',
+  strategy: 'Strategie',
+  workerPlacement: 'Worker Placement',
+  word: 'Wortspiel',
+  dice: 'Würfel',
   other: 'Sonstiges',
 }
 
