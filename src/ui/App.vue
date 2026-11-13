@@ -136,6 +136,7 @@ const foundGames = computed<FoundGame[]>(() => {
       :game="state.chosenGame"
       :shelf-name="chosenGameShelfName"
       :delete-state="state.deleteState"
+      @played-today="manager.markChosenGamePlayedToday()"
       @edit="manager.editChosenGame()"
       @ask-delete="manager.askDeleteChosenGame()"
       @confirm-delete="manager.confirmDelete()"

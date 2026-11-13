@@ -8,6 +8,7 @@ import { describe, expect, test } from 'vitest'
 
 import type { GameCollection } from '../../src/domain/GameCollection'
 import type { GameRepository } from '../../src/domain/GameRepository'
+import { todayIsoDate } from '../../src/domain/LastPlayed'
 import { JsonFileGameRepository } from '../../src/infrastructure/JsonFileGameRepository'
 import { JsonFileShelfRepository } from '../../src/infrastructure/JsonFileShelfRepository'
 import { emptyForm, formFromGame } from '../../src/ui/gameForm'
@@ -423,6 +424,81 @@ describe('Ungespeicherte Eingaben: "Änderungen verwerfen?"', () => {
     expect(manager.state.value).toEqual(before)
     manager.cancelDiscard()
     expect(manager.state.value).toEqual(before)
+  })
+})
+
+describe('Heute gespielt', () => {
+  test('Setzt "zuletzt gespielt" auf heute: im Spiel, in der Sammlung und in der Datei', () =>
+    withTestFolder(async (folder) => {
+      const path = join(folder, 'games.json')
+      const repository = new JsonFileGameRepository(path)
+      await repository.save(games)
+
+      const manager = managerWith(repository)
+      manager.showDetail(azul)
+      await manager.markChosenGamePlayedToday()
+
+      const state = manager.state.value
+      expect(state.chosenGame?.name.text).toBe('Azul')
+      expect(state.chosenGame?.details.lastPlayed?.isoDate).toBe(todayIsoDate())
+      expect(state.collection.findById(azul.id)).toBe(state.chosenGame)
+      expect(state.deleteState).toEqual({ kind: 'notAsked' })
+      expect(await loadFrom(path)).toEqual(state.collection)
+    }))
+
+  test('Schlägt das Speichern fehl, bleibt das Spiel und es gibt eine Fehlermeldung', () =>
+    withTestFolder(async (folder) => {
+      const blocker = join(folder, 'blockiert')
+      await writeFile(blocker, '', 'utf8')
+
+      const manager = managerWith(new JsonFileGameRepository(join(blocker, 'games.json')))
+      manager.showDetail(azul)
+      await manager.markChosenGamePlayedToday()
+
+      const state = manager.state.value
+      expect(state.collection).toBe(games)
+      expect(state.chosenGame).toBe(azul)
+      expect(state.deleteState).toMatchObject({
+        kind: 'failed',
+        message: expect.stringMatching(/^Speichern hat nicht geklappt/),
+      })
+    }))
+
+  test('Nach einem Ladefehler ist "Heute gespielt" gesperrt', () =>
+    withTestFolder(async (folder) => {
+      const path = join(folder, 'games.json')
+      const manager = managerWith(new JsonFileGameRepository(path), {
+        loadError: 'kaputt',
+        chosenGame: azul,
+      })
+      await manager.markChosenGamePlayedToday()
+
+      const state = manager.state.value
+      expect(state.collection).toBe(games)
+      expect(existsSync(path)).toBe(false)
+      expect(state.deleteState).toMatchObject({
+        kind: 'failed',
+        message: expect.stringMatching(/^Speichern ist gesperrt/),
+      })
+    }))
+
+  test('Ohne ausgewähltes Spiel ändert sich nichts', async () => {
+    const repository = new MemoryGameRepository()
+    const manager = managerWith(repository)
+    const before = manager.state.value
+    await manager.markChosenGamePlayedToday()
+
+    expect(manager.state.value).toEqual(before)
+    expect(repository.saveCount).toBe(0)
+  })
+
+  test('Eine offene Nachfrage "Wirklich löschen?" ist danach erledigt', async () => {
+    const manager = managerWith(new MemoryGameRepository())
+    manager.showDetail(azul)
+    manager.askDeleteChosenGame()
+    await manager.markChosenGamePlayedToday()
+
+    expect(manager.state.value.deleteState).toEqual({ kind: 'notAsked' })
   })
 })
 

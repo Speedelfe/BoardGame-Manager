@@ -1,6 +1,7 @@
 import { shallowRef, type ShallowRef } from 'vue'
 
 import { loadLibrary } from '../application/loadLibrary'
+import { markGamePlayed } from '../application/markGamePlayed'
 import { removeGame } from '../application/removeGame'
 import { saveGame } from '../application/saveGame'
 import type { Game } from '../domain/Game'
@@ -24,11 +25,13 @@ import {
 } from './gameForm'
 import { createShelfActions, initialShelfView, type ShelfViewState } from './shelfActions'
 
-// Wo wir beim Löschen des ausgewählten Spiels gerade stehen
+// Wo wir beim Löschen des ausgewählten Spiels gerade stehen.
+// Die Fehlermeldung wird auch benutzt, wenn "Heute gespielt" nicht geklappt hat:
+// Sie steht in der Detailansicht an derselben Stelle.
 export type DeleteState =
   | { kind: 'notAsked' } // nichts passiert, normale Detailansicht
   | { kind: 'confirming' } // "Wirklich löschen?" wird angezeigt
-  | { kind: 'failed'; message: string } // Löschen hat nicht geklappt
+  | { kind: 'failed'; message: string } // Löschen oder "Heute gespielt" hat nicht geklappt
 
 // Ein Klick, der das offene Formular mit ungespeicherten Eingaben schließen würde.
 // Er wartet auf die Antwort zu "Änderungen verwerfen?".
@@ -350,6 +353,38 @@ export function createGameManager(repositories: Repositories, startState: State 
     })
   }
 
+  // Klick auf "Heute gespielt": beim ausgewählten Spiel "zuletzt gespielt" auf heute setzen
+  // und gleich speichern, ohne Nachfrage.
+  async function markChosenGamePlayedToday(): Promise<void> {
+    const { loadError, collection, chosenGame } = state.value
+
+    // Wie beim Speichern: nach einem Ladefehler wird die Datei nicht angefasst
+    if (loadError !== null) {
+      change({
+        deleteState: {
+          kind: 'failed',
+          message:
+            'Speichern ist gesperrt, weil die Spieleliste beim Start nicht gelesen werden konnte.',
+        },
+      })
+      return
+    }
+    if (chosenGame === null) return
+
+    const marked = await markGamePlayed(repository, collection, chosenGame)
+
+    if (!marked.ok) {
+      change({ deleteState: { kind: 'failed', message: marked.error } })
+      return
+    }
+    // Das geänderte Spiel bleibt ausgewählt, die Details zeigen gleich das neue Datum
+    change({
+      collection: marked.value.collection,
+      chosenGame: marked.value.game,
+      deleteState: { kind: 'notAsked' },
+    })
+  }
+
   // Löschen in zwei Schritten: erst nachfragen, dann wirklich löschen
   function askDeleteChosenGame(): void {
     change({ deleteState: { kind: 'confirming' } })
@@ -406,6 +441,7 @@ export function createGameManager(repositories: Repositories, startState: State 
     changeDescription,
     cancelForm,
     saveForm,
+    markChosenGamePlayedToday,
     askDeleteChosenGame,
     cancelDelete,
     confirmDelete,

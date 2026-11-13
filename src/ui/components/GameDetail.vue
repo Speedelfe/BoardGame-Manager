@@ -3,6 +3,7 @@ import { computed } from 'vue'
 
 import type { Game } from '../../domain/Game'
 import { genreNames } from '../../domain/GameGenres'
+import { todayIsoDate } from '../../domain/LastPlayed'
 import type { DeleteState } from '../gameManager'
 
 // shelfName: der Name des Regals, in dem das Spiel steht. Das Spiel selbst kennt nur die ID des Regals.
@@ -31,7 +32,11 @@ const info = computed(() => {
 
 // Die Knöpfe schicken nur Ereignisse, nicht das Spiel selbst:
 // Der Programmablauf weiß, welches Spiel gerade ausgewählt ist.
+// Steht bei "zuletzt gespielt" schon der heutige Tag? Dann ist "Heute gespielt" ausgegraut.
+const playedToday = computed(() => props.game.details.lastPlayed?.isoDate === todayIsoDate())
+
 defineEmits<{
+  playedToday: []
   edit: []
   askDelete: []
   confirmDelete: []
@@ -62,6 +67,8 @@ defineEmits<{
       </template>
       <template v-else>
         <span v-if="deleteState.kind === 'failed'" class="error">{{ deleteState.message }}</span>
+        <!-- Setzt "zuletzt gespielt" auf heute und speichert sofort -->
+        <button :disabled="playedToday" @click="$emit('playedToday')">Heute gespielt</button>
         <button @click="$emit('edit')">Bearbeiten</button>
         <button @click="$emit('askDelete')">Löschen</button>
       </template>
