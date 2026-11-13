@@ -67,7 +67,7 @@ describe('Neues Spiel speichern', () => {
     const { collection, game } = expectOk(await saveNew(repository, 'Monopoly', '4'))
 
     expect(game.name.text).toBe('Monopoly')
-    expect(game.playerCount.value).toBe(4)
+    expect(game.playerCount.min).toBe(4)
     expect(names(collection.games)).toEqual(['Dixit', 'Azul', 'Flügelschlag', 'Monopoly'])
     expect(repository.saved).toBe(collection)
   })
@@ -75,7 +75,7 @@ describe('Neues Spiel speichern', () => {
   test('Leerzeichen am Anfang und Ende werden entfernt', async () => {
     const { game } = expectOk(await saveNew(new MemoryGameRepository(), '  Monopoly ', ' 4 '))
     expect(game.name.text).toBe('Monopoly')
-    expect(game.playerCount.value).toBe(4)
+    expect(game.playerCount.min).toBe(4)
   })
 
   test.each([
@@ -185,7 +185,7 @@ describe('Bearbeitetes Spiel speichern', () => {
       await saveEdited(new MemoryGameRepository(), dixit, 'Dixit Odyssey', '6'),
     )
     expect(game.id.equals(dixit.id)).toBe(true)
-    expect(game.playerCount.value).toBe(6)
+    expect(game.playerCount.min).toBe(6)
     expect(names(collection.games)).toEqual(['Dixit Odyssey', 'Azul', 'Flügelschlag'])
   })
 

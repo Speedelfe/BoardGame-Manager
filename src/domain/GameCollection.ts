@@ -43,7 +43,7 @@ export class GameCollection {
       if (!id.ok) return id
       const name = GameName.create(entry.name)
       if (!name.ok) return name
-      const playerCount = PlayerCount.fromNumber(entry.playerCount)
+      const playerCount = PlayerCount.fromNumbers(entry.playerCount, null)
       if (!playerCount.ok) return playerCount
       const details = detailsFromData(entry)
       if (!details.ok) return fail(`Spiel "${entry.name}": ${details.error}`)
@@ -58,7 +58,7 @@ export class GameCollection {
     return this.games.map((game) => ({
       id: game.id.value,
       name: game.name.text,
-      playerCount: game.playerCount.value,
+      playerCount: game.playerCount.min,
       playTimeMin: game.details.playTime?.min ?? null,
       playTimeMax: game.details.playTime?.max ?? null,
       playTimeOpenEnded: game.details.playTime?.openEnded ?? false,
@@ -168,7 +168,7 @@ function findProblem(data: readonly GameData[]): string | null {
     return `Diese Spiele haben keinen Namen (ID): ${nameless.map(normalizedId).join(', ')}`
   }
 
-  const wrongPlayerCounts = data.filter((entry) => !PlayerCount.fromNumber(entry.playerCount).ok)
+  const wrongPlayerCounts = data.filter((entry) => !PlayerCount.fromNumbers(entry.playerCount, null).ok)
   if (wrongPlayerCounts.length > 0) {
     const details = wrongPlayerCounts
       .map((entry) => `"${entry.name}" (${entry.playerCount})`)

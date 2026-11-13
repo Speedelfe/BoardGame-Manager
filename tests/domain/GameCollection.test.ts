@@ -25,13 +25,13 @@ import {
 } from '../testData'
 
 const name = (text: string) => expectOk(GameName.create(text))
-const count = (value: number) => expectOk(PlayerCount.fromNumber(value))
+const count = (value: number) => expectOk(PlayerCount.fromNumbers(value, null))
 
 describe('Hinzufügen', () => {
   test('Neues Spiel wird hinten an die Sammlung angehängt', () => {
     const { collection, game } = expectOk(games.add(name('Monopoly'), count(4)))
     expect(names(collection.games)).toEqual(['Dixit', 'Azul', 'Flügelschlag', 'Monopoly'])
-    expect(game.playerCount.value).toBe(4)
+    expect(game.playerCount.min).toBe(4)
   })
 
   test('Neues Spiel bekommt eine neue ID', () => {
@@ -55,7 +55,7 @@ describe('Ändern', () => {
       games.change(azul.id, name('Azul Sommerpavillon'), count(2)),
     )
     expect(names(collection.games)).toEqual(['Dixit', 'Azul Sommerpavillon', 'Flügelschlag'])
-    expect(collection.games[1]?.playerCount.value).toBe(2)
+    expect(collection.games[1]?.playerCount.min).toBe(2)
     expect(game.id.equals(azul.id)).toBe(true)
   })
 

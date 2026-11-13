@@ -50,7 +50,7 @@ export function formFromGame(game: Game): GameForm {
 
   return {
     nameInput: game.name.text,
-    playerCountInput: String(game.playerCount.value),
+    playerCountInput: String(game.playerCount.min),
     playTimeMinInput: playTime === null ? '' : String(playTime.min),
     playTimeMaxInput: playTime === null || playTime.max === null ? '' : String(playTime.max),
     playTimeOpenEndedInput: playTime?.openEnded ?? false,

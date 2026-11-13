@@ -10,31 +10,83 @@ import { PlayTime } from '../../src/domain/PlayTime'
 import { expectError, expectOk } from '../testData'
 
 describe('Spieleranzahl', () => {
-  test('Gültige Eingabe wird zur Zahl, Leerzeichen am Rand sind egal', () => {
-    expect(expectOk(PlayerCount.fromInput('4')).value).toBe(4)
-    expect(expectOk(PlayerCount.fromInput(' 4 ')).value).toBe(4)
+  const playerCount = (min: string, max: string) => expectOk(PlayerCount.fromInput(min, max))
+
+  test('Nur "von" ergibt eine einzelne Zahl, Leerzeichen am Rand sind egal', () => {
+    const single = playerCount(' 4 ', '')
+    expect(single.min).toBe(4)
+    expect(single.max).toBeNull()
+    expect(single.text).toBe('4 Spieler')
+  })
+
+  test('"von" und "bis" ergeben einen Bereich', () => {
+    const range = playerCount('2', ' 5 ')
+    expect(range.min).toBe(2)
+    expect(range.max).toBe(5)
+    expect(range.text).toBe('2–5 Spieler')
+  })
+
+  test('Gleiche Zahlen bei "von" und "bis" werden zu einer einzelnen Zahl', () => {
+    const single = playerCount('4', '4')
+    expect(single.max).toBeNull()
+    expect(single.text).toBe('4 Spieler')
   })
 
   test('Die kleinste und die größte erlaubte Spieleranzahl werden angenommen', () => {
-    expect(expectOk(PlayerCount.fromInput('1')).value).toBe(1)
-    expect(expectOk(PlayerCount.fromInput('100')).value).toBe(100)
+    expect(playerCount('1', '100').text).toBe('1–100 Spieler')
+    expect(playerCount('1', '').text).toBe('1 Spieler')
+    expect(playerCount('100', '').text).toBe('100 Spieler')
+  })
+
+  test('Nach oben offen: "ab ..." ohne "bis"', () => {
+    const open = expectOk(PlayerCount.fromInput('4', '', true))
+    expect(open.min).toBe(4)
+    expect(open.max).toBeNull()
+    expect(open.openEnded).toBe(true)
+    expect(open.text).toBe('ab 4 Spieler')
+  })
+
+  test('Ohne Häkchen ist die Spieleranzahl nicht nach oben offen', () => {
+    expect(playerCount('4', '').openEnded).toBe(false)
+    expect(playerCount('2', '5').openEnded).toBe(false)
+  })
+
+  test('Nach oben offen geht nicht ohne "von" und nicht zusammen mit "bis"', () => {
+    expect(expectError(PlayerCount.fromInput('', '', true))).toBe(
+      'Bitte gib bei der Spieleranzahl zuerst "von" an.',
+    )
+    expect(expectError(PlayerCount.fromInput('2', '5', true))).toBe(
+      'Eine Spieleranzahl, die nach oben offen ist, kann kein "bis" haben.',
+    )
   })
 
   test.each([
-    ['', 'Die Spieleranzahl muss eine Zahl sein.'],
-    ['vier', 'Die Spieleranzahl muss eine Zahl sein.'],
-    ['2.5', 'Die Spieleranzahl muss eine Zahl sein.'],
-    ['0', 'Die Spieleranzahl muss mindestens 1 sein.'],
-    ['-2', 'Die Spieleranzahl muss mindestens 1 sein.'],
-    ['101', 'Die Spieleranzahl darf höchstens 100 sein.'],
-    ['5000', 'Die Spieleranzahl darf höchstens 100 sein.'],
-    ['99999999999999999999', 'Die Spieleranzahl darf höchstens 100 sein.'],
-  ])('Ungültige Eingabe "%s" ergibt die passende Fehlermeldung', (input, expected) => {
-    expect(expectError(PlayerCount.fromInput(input))).toBe(expected)
+    ['', '', 'Die Spieleranzahl muss eine Zahl sein.'],
+    ['', '5', 'Bitte gib bei der Spieleranzahl zuerst "von" an.'],
+    ['vier', '', 'Die Spieleranzahl muss eine Zahl sein.'],
+    ['2.5', '', 'Die Spieleranzahl muss eine Zahl sein.'],
+    ['2', 'viele', 'Die Spieleranzahl muss eine Zahl sein.'],
+    ['0', '', 'Die Spieleranzahl muss mindestens 1 sein.'],
+    ['-2', '', 'Die Spieleranzahl muss eine Zahl sein.'],
+    ['+4', '', 'Die Spieleranzahl muss eine Zahl sein.'],
+    ['101', '', 'Die Spieleranzahl darf höchstens 100 sein.'],
+    ['5000', '', 'Die Spieleranzahl darf höchstens 100 sein.'],
+    ['2', '101', 'Die Spieleranzahl darf höchstens 100 sein.'],
+    ['2', '99999999999999999999', 'Die Spieleranzahl darf höchstens 100 sein.'],
+    ['5', '2', 'Bei der Spieleranzahl darf "von" nicht größer als "bis" sein.'],
+  ])('Ungültige Eingabe ("%s", "%s") ergibt die passende Fehlermeldung', (min, max, expected) => {
+    expect(expectError(PlayerCount.fromInput(min, max))).toBe(expected)
   })
 
-  test.each([0, -3, 101, 2.5])('Ungültige Zahl %d wird abgelehnt', (value) => {
-    expect(PlayerCount.fromNumber(value).ok).toBe(false)
+  test.each([
+    [0, null],
+    [-3, null],
+    [101, null],
+    [2.5, null],
+    [2, 101],
+    [5, 2],
+  ])('Ungültige Zahlen (%d, %d) werden abgelehnt', (min, max) => {
+    expect(PlayerCount.fromNumbers(min, max).ok).toBe(false)
   })
 })
 
